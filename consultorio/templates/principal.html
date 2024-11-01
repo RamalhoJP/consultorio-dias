@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block titulo %}
+    Portal Biblioteca
+{% endblock %}
+
+{% block conteudo %}
+    <main class="container mt-5">
+        <h1>Portal Biblioteca</h1>
+        <h4>Bem-vindo ao Portal da Biblioteca</h4>
+        <p>Explore nosso acervo de Livros e TCCs, veja seus dashboards e entre na sua conta para mais funcionalidades.</p>
+        <br>
+        <center>
+            <img src="{% static 'logo-portal.png' %}" alt="logo-portal" width="400" height="300">
+        </center>
+    </main>
+{% endblock %}
