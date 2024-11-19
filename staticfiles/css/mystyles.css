@@ -1,0 +1,15 @@
+body {
+  font-family: Arial, sans-serif;
+}
+
+h1 {
+  color: #343a40;
+}
+
+header {
+  background-color: #3c4f45;
+}
+
+.content {
+  margin-left: 260px; 
+}

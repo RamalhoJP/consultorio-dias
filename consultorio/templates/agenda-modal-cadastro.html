@@ -1,0 +1,37 @@
+{% load static %}
+
+<div class="modal fade" id="eventModal" tabindex="-1" aria-labelledby="eventModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eventModalLabel">Cadastrar Evento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="eventTitle" class="form-label">Título</label>
+                    <input type="text" class="form-control" id="eventTitle">
+                </div>
+                <div class="mb-3">
+                    <label for="eventDescription" class="form-label">Descrição</label>
+                    <textarea class="form-control" id="eventDescription"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="eventStart" class="form-label">Início</label>
+                    <input type="datetime-local" class="form-control" id="eventStart">
+                </div>
+                <div class="mb-3">
+                    <label for="eventEnd" class="form-label">Fim</label>
+                    <input type="datetime-local" class="form-control" id="eventEnd">
+                </div>
+                <input type="hidden" id="eventId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="deleteEvent">Apagar</button>
+                <button type="button" class="btn btn-primary" id="saveEvent">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+

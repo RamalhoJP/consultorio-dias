@@ -1,0 +1,25 @@
+{% load static %}
+
+<div class="sidebar bg-light p-3" style="width: 250px; height: 100vh; overflow-y: auto;">
+    <h4>Agendas</h4>
+    <ul class="list-group" id="dentistas-list">
+        <li class="list-group-item">Carregando dentistas...</li>
+    </ul>
+    <style>
+        .sidebar .list-group-item {
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+    
+        .sidebar .list-group-item:hover {
+            background-color: #f0f0f0; 
+        }
+     
+        .sidebar .list-group-item.active {
+            background-color: #007bff; 
+            color: white;
+        }
+    </style>
+</div>
+
+<script src="{% static 'js/sidebar.js' %}"></script>
