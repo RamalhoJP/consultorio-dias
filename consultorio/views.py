@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
 import json
 from .models import Evento
 from .models import Dentista
@@ -12,10 +13,12 @@ def principal(request):
     template = loader.get_template('principal.html')
     return HttpResponse(template.render())
 
+@login_required(login_url="/auth/login")
 def agenda(request):
     template = loader.get_template('agenda.html')
     return HttpResponse(template.render())
 
+@login_required(login_url="/auth/login")
 def dentistas(request):
     dentistas = Dentista.objects.all()
     dentistas_json = []
@@ -40,6 +43,7 @@ def dentistas(request):
  
     return JsonResponse(dentistas_json, safe=False)
 
+@login_required(login_url="/auth/login")
 def eventos(request, dentista_id=None):
     if dentista_id:
         eventos = Evento.objects.filter(dentista_id=dentista_id)
@@ -59,6 +63,7 @@ def eventos(request, dentista_id=None):
     return JsonResponse(eventos_json, safe=False)
 
 @csrf_exempt
+@login_required(login_url="/auth/login")
 def cadastrar_evento(request):
     if request.method == 'POST':
         try:
@@ -98,6 +103,7 @@ def cadastrar_evento(request):
             return JsonResponse({"status": "error", "message": str(e)}, status=400)
 
 @csrf_exempt
+@login_required(login_url="/auth/login")
 def atualizar_evento(request):
     if request.method == "POST":
         try:
@@ -113,6 +119,7 @@ def atualizar_evento(request):
             return JsonResponse({"status": "error", "message": str(e)})
 
 @csrf_exempt
+@login_required(login_url="/auth/login")
 def deletar_evento(request, evento_id):
     if request.method == 'DELETE':
         try:

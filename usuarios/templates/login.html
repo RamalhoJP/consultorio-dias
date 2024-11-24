@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block titulo %}
+    Portal Biblioteca - Login
+{% endblock %}
+
+{% block conteudo %}
+    <main class="container mt-5">
+        <center>
+            <h1>Login</h1>
+            <form action="{% url 'login' %}" method="POST">
+                {% csrf_token %}
+                <div class="input-group">
+                    <span class="input-group-text">Usuário: </span>
+                    <input type="text" class="form-control" placeholder="Usuário ..." name="usuario" required>
+                </div>
+                <br>
+                <div class="input-group">
+                    <span class="input-group-text">Senha: </span>
+                    <input type="password" class="form-control" placeholder="Senha ..." id="password" name="senha" required>
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="button" onclick="alterarVisibilidadeSenha('password')">
+                            <i class="fa fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <br>
+                <input type="submit" value="Logar" class="btn btn-primary">
+            </form>
+            <br>
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %}" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </center>
+    </main>
+    <script>
+        function alterarVisibilidadeSenha(fieldId) {
+            const field = document.getElementById(fieldId);
+            if (field.type === "password") {
+                field.type = "text";
+            } else {
+                field.type = "password";
+            }
+        }
+    </script>
+{% endblock %}

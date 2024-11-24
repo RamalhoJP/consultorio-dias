@@ -21,13 +21,11 @@ document.addEventListener('DOMContentLoaded', function () {
             day: 'Dia',
             list: 'Lista'
         },
-        initialDate: '2023-01-12',
         navLinks: true,
-        businessHours: true,
         editable: true,
         selectable: true,
+        allDaySlot: false, 
         initialView: 'timeGridWeek',
-        initialDate: new Date().toISOString().slice(0, 10), // A data de hoje no formato yyyy-mm-dd
         locale: 'pt-br',
 
         events: function (info, successCallback, failureCallback) {
