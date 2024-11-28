@@ -10,11 +10,10 @@ function carregarDentistas() {
                     const li = document.createElement('li');
                     li.classList.add('list-group-item');
                     li.textContent = dentista.nome;
-                    li.setAttribute('data-id', dentista.id); // Armazena o ID do dentista
+                    li.setAttribute('data-id', dentista.id);
                     dentistasList.appendChild(li);
                 });
 
-                // Seleciona o primeiro dentista da lista
                 selecionarDentista(dentistas[0].id);
             } else {
                 const li = document.createElement('li');
@@ -54,11 +53,10 @@ function selecionarDentista(dentistaId) {
     }
 }
 
-// Seleciona o dentista
 document.getElementById('dentistas-list').addEventListener('click', function (event) {
     if (event.target && event.target.matches('li.list-group-item')) {
         const dentistaId = event.target.getAttribute('data-id');
-        selecionarDentista(dentistaId);
+        selecionarDentista(dentistaId);  // Chama a função para selecionar o dentista clicado
     }
 });
 

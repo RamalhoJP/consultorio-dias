@@ -1,22 +1,78 @@
 from django.http import HttpResponse
 from django.template import loader
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 import json
 from .models import Evento
 from .models import Dentista
+from .models import Cliente
+from .models import Orcamento
 
 def principal(request):
     template = loader.get_template('principal.html')
     return HttpResponse(template.render())
 
+def orcamentos(request):
+    dentes = range(1, 65)
+    return render(request, 'orcamentos.html', {'dentes': dentes})
+
+def cadastrar_orcamento(request):
+    if request.method == 'POST':
+        titulo = request.POST.get('titulo')
+        descricao = request.POST.get('descricao')
+        preco = request.POST.get('preco')
+        dentes_com_circulo = request.POST.get('dentes_com_circulo', '[]')
+        dentes_com_risco = request.POST.get('dentes_com_risco', '[]')
+
+        # Cria o objeto Orcamento e salva no banco
+        Orcamento.objects.create(
+            titulo=titulo,
+            descricao=descricao,
+            preco=preco,
+            dentes_com_circulo=json.loads(dentes_com_circulo),
+            dentes_com_risco=json.loads(dentes_com_risco),
+        )
+        return redirect('orcamento.html') 
+
+    # Caso seja um GET, renderiza a página
+    return render(request, 'orcamento.html', {'dentes': range(1, 65)})
+
 @login_required(login_url="/auth/login")
 def agenda(request):
     template = loader.get_template('agenda.html')
     return HttpResponse(template.render())
+
+@login_required(login_url="/auth/login")
+def clientes(request):
+    clientes = Cliente.objects.all()
+    return render(request, 'clientes.html', {'clientes': clientes})
+
+@login_required(login_url="/auth/login")
+def cadastrar_cliente(request):
+    if request.method == 'POST':
+        nome = request.POST.get('nome')
+        telefone = request.POST.get('telefone')
+        Cliente.objects.create(nome=nome, telefone=telefone)
+        return redirect('listar_clientes')
+
+@login_required(login_url="/auth/login")
+def editar_cliente(request, cliente_id):
+    cliente = get_object_or_404(Cliente, id=cliente_id)
+    if request.method == 'POST':
+        cliente.nome = request.POST.get('nome')
+        cliente.telefone = request.POST.get('telefone')
+        cliente.save()
+        return redirect('listar_clientes')
+
+@login_required(login_url="/auth/login")
+def excluir_cliente(request, cliente_id):
+    cliente = get_object_or_404(Cliente, id=cliente_id)
+    if request.method == 'POST':
+        cliente.delete()
+        return redirect('listar_clientes')
 
 @login_required(login_url="/auth/login")
 def dentistas(request):

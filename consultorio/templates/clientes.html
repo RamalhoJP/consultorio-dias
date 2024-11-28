@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}
+Clientes
+{% endblock %}
+
+{% block conteudo %}
+<div class="container mt-4">
+    <h1 class="mb-4">Lista de Clientes</h1>
+
+    <div class="row mb-3">
+        <!-- Barra de pesquisa -->
+        <div class="col-md-9">
+            <input type="text" id="pesquisa" class="form-control" placeholder="Pesquisar cliente por nome...">
+        </div>
+        <!-- Botão de adicionar -->
+        <div class="col-md-3 text-md-end mt-2 mt-md-0">
+            <button class="btn btn-primary w-50" data-bs-toggle="modal" data-bs-target="#clienteModal">Cadastrar Cliente</button>
+        </div>
+    </div>
+
+    <!-- Tabela de listagem -->
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Telefone</th>
+                <th class="text-end">Ações</th>
+            </tr>
+        </thead>
+        <tbody id="tabela-clientes">
+            {% for cliente in clientes %}
+            <tr>
+                <td>{{ cliente.nome }}</td>
+                <td>{{ cliente.telefone }}</td>
+                <td class="text-end">
+                    <!-- Botão para abrir o modal de edição -->
+                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#editarClienteModal{{ cliente.id }}">Editar</button>
+
+                    <!-- Botão para abrir o modal de exclusão -->
+                    <button class="btn btn-danger btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#excluirClienteModal{{ cliente.id }}">Excluir</button>
+                </td>
+            </tr>
+
+            <!-- Modal para edição -->
+            <div class="modal fade" id="editarClienteModal{{ cliente.id }}" tabindex="-1"
+                aria-labelledby="editarClienteModalLabel{{ cliente.id }}" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form method="post" action="{% url 'editar_cliente' cliente.id %}">
+                            {% csrf_token %}
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editarClienteModalLabel{{ cliente.id }}">Editar Cliente</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label for="nome{{ cliente.id }}" class="form-label">Nome</label>
+                                    <input type="text" class="form-control" id="nome{{ cliente.id }}" name="nome"
+                                        value="{{ cliente.nome }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="telefone{{ cliente.id }}" class="form-label">Telefone</label>
+                                    <input type="text" class="form-control telefone" id="telefone{{ cliente.id }}"
+                                        name="telefone" value="{{ cliente.telefone }}">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary"
+                                    data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">Salvar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal para exclusão -->
+            <div class="modal fade" id="excluirClienteModal{{ cliente.id }}" tabindex="-1"
+                aria-labelledby="excluirClienteModalLabel{{ cliente.id }}" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form method="post" action="{% url 'excluir_cliente' cliente.id %}">
+                            {% csrf_token %}
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="excluirClienteModalLabel{{ cliente.id }}">Excluir Cliente
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                Tem certeza de que deseja excluir o cliente <strong>{{ cliente.nome }}</strong>?
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary"
+                                    data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-danger">Excluir</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal para cadastro -->
+<div class="modal fade" id="clienteModal" tabindex="-1" aria-labelledby="clienteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'cadastrar_cliente' %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="clienteModalLabel">Cadastrar Cliente</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="nome" class="form-label">Nome</label>
+                        <input type="text" class="form-control" id="nome" name="nome" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="telefone" class="form-label">Telefone</label>
+                        <input type="text" class="form-control telefone" id="telefone" name="telefone" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/inputmask/dist/inputmask.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Máscara de telefone
+        Inputmask({
+            mask: "(99) 99999-9999",
+            placeholder: " ",
+            clearMaskOnLostFocus: true,
+            showMaskOnHover: false
+        }).mask(document.querySelectorAll('.telefone'));
+
+        // Filtrar tabela
+        const pesquisaInput = document.getElementById('pesquisa');
+        const tabelaClientes = document.getElementById('tabela-clientes');
+
+        pesquisaInput.addEventListener('input', function () {
+            const filtro = pesquisaInput.value.toLowerCase();
+            const linhas = tabelaClientes.getElementsByTagName('tr');
+
+            for (const linha of linhas) {
+                const nomeCliente = linha.cells[0].textContent.toLowerCase(); // A primeira célula contém o nome
+                if (nomeCliente.includes(filtro)) {
+                    linha.style.display = ''; // Mostrar linha
+                } else {
+                    linha.style.display = 'none'; // Ocultar linha
+                }
+            }
+        });
+    });
+</script>
+
+{% endblock %}

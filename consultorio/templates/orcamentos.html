@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block extra_styles %}
+<style>
+    .container-dentes {
+        position: relative;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: end;
+        width: 1640px;
+        justify-content: space-around;
+        transform: scale(0.3);
+        margin-left: -80px;
+        margin-top: -100px;
+        background-color: white;
+        border: 10px solid black;
+        border-radius: 20px;
+    }
+
+    .dente img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        filter: opacity(70%);
+
+    }
+    .dente {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .dente:hover .imagem-overlay {
+        background-color: rgba(128, 128, 128, 0.5);
+    }
+
+    .imagem-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: transparent;
+        transition: background-color 0.1s ease-in-out;
+    }
+
+    .circulo {
+        position: absolute;
+        top: 60%;
+        left: 50%;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background-color: rgba(255, 0, 0, 1);
+        visibility: hidden;
+        transform: translate(-50%, -50%);
+    }
+
+    .risco {
+        position: absolute;
+        top: 60%;
+        left: 50%;
+        width: 10px;
+        height: 50%;
+        background-color: red;
+        visibility: hidden;
+        transform: translate(-50%, -50%) rotate(45deg);
+        transform-origin: center center;
+    }
+</style>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.dente').forEach(dente => {
+            dente.addEventListener('click', () => {
+                console.log("Dente clicado:", dente);
+
+                const circulo = dente.querySelector('.circulo');
+                const risco = dente.querySelector('.risco');
+
+                if (!circulo || !risco) {
+                    console.error("Elementos não encontrados no dente:", dente);
+                    return;
+                }
+
+                if (circulo.style.visibility === 'hidden' && risco.style.visibility === 'hidden') {
+                    circulo.style.visibility = 'visible';
+                } else if (circulo.style.visibility === 'visible') {
+                    circulo.style.visibility = 'hidden';
+                    risco.style.visibility = 'visible';
+                } else {
+                    risco.style.visibility = 'hidden';
+                }
+            });
+        });
+    });
+    document.addEventListener('DOMContentLoaded', () => {
+        const dentesComCirculo = [];
+        const dentesComRisco = [];
+
+        document.querySelectorAll('.dente').forEach((dente) => {
+            dente.addEventListener('click', () => {
+                const id = dente.id.split('-')[1];
+                const circulo = dente.querySelector('.circulo');
+                const risco = dente.querySelector('.risco');
+
+                if (circulo.style.visibility === 'hidden' && risco.style.visibility === 'hidden') {
+                    circulo.style.visibility = 'visible';
+                    dentesComCirculo.push(id);
+                    dentesComRisco.splice(dentesComRisco.indexOf(id), 1);
+                } else if (circulo.style.visibility === 'visible') {
+                    circulo.style.visibility = 'hidden';
+                    risco.style.visibility = 'visible';
+                    dentesComRisco.push(id);
+                    dentesComCirculo.splice(dentesComCirculo.indexOf(id), 1);
+                } else {
+                    risco.style.visibility = 'hidden';
+                    dentesComRisco.splice(dentesComRisco.indexOf(id), 1);
+                }
+
+                // Atualiza os campos ocultos com os vetores atualizados
+                document.getElementById('dentes_com_circulo').value = JSON.stringify(dentesComCirculo);
+                document.getElementById('dentes_com_risco').value = JSON.stringify(dentesComRisco);
+            });
+        });
+    });
+</script>
+{% endblock %}
+
+{% block conteudo %}
+
+<h1 style="text-align: center;">Odontograma</h1>
+<div class="container-dentes">
+    {% for i in dentes %}
+    <div class="dente" id="dente-{{ i }}">
+        <img src="{% static 'images/' %}dente-{{ i }}.png" alt="Dente {{ i }}">
+        <div class="imagem-overlay"></div>
+
+        <!-- Verifica se o dente está marcado (verificar se isso aqui funciona) -->
+        <div class="circulo"
+            style="visibility: {% if i|stringformat:'d' in dados.dentes_com_circulo %}visible{% else %}hidden{% endif %};">
+        </div>
+        <div class="risco"
+            style="{% if i|stringformat:'d' in dados.dentes_com_risco %}visibility: visible;{% else %}visibility: hidden;{% endif %}">
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="container ">
+    <!-- url faltando -->
+    <form method="post" action="">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="titulo" class="form-label">Titulo</label>
+            <input type="text" class="form-control" id="titulo" name="titulo">
+        </div>
+        <div class="mb-3">
+            <label for="descricao" class="form-label">Descrição</label>
+            <textarea class="form-control" id="descricao" name="descricao"></textarea>
+        </div>
+        <div class="mb-3">
+            <label for="preco" class="form-label">Preço</label>
+            <input type="number" class="form-control" id="preco" name="preco">
+        </div>
+
+        <!-- Campos ocultos para enviar os vetores de dentes -->
+        <input type="hidden" id="dentes_com_circulo" name="dentes_com_circulo">
+        <input type="hidden" id="dentes_com_risco" name="dentes_com_risco">
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,30 +1,32 @@
 from django.contrib import admin
-from .models import Paciente
+from .models import Orcamento
+from .models import Cliente
 from .models import Evento
 from .models import Dentista
 
-class PacienteAdmin(admin.ModelAdmin):
-    list_display = ("nome", "idade")
+class ClienteAdmin(admin.ModelAdmin):
+    list_display = ("nome", "telefone")
 
-admin.site.register(Paciente, PacienteAdmin)
+admin.site.register(Cliente, ClienteAdmin)
 
 class EventoAdmin(admin.ModelAdmin):
     list_display = ("id", "titulo", "descricao")
 
 admin.site.register(Evento, EventoAdmin)
 
-from django.contrib import admin
-from .models import Dentista, Evento
+class OrcamentoAdmin(admin.ModelAdmin):
+    list_display = ("titulo", "descricao")
+
+admin.site.register(Orcamento, OrcamentoAdmin)
 
 class DentistaAdmin(admin.ModelAdmin):
-    list_display = ("id", "nome", "mostrar_eventos")  # Use o método customizado
+    list_display = ("id", "nome", "mostrar_eventos")
 
     def mostrar_eventos(self, obj):
-        # Recupere os eventos do dentista e mostre como string
-        eventos = obj.eventos.all()  # Obtém todos os eventos relacionados ao dentista
-        eventos_nomes = [evento.titulo for evento in eventos]  # Extraímos os títulos dos eventos
+        eventos = obj.eventos.all()  
+        eventos_nomes = [evento.titulo for evento in eventos]
         return ", ".join(eventos_nomes) if eventos else "Nenhum evento"
 
-    mostrar_eventos.short_description = "Eventos"  # Defina o nome que será exibido no admin
+    mostrar_eventos.short_description = "Eventos"
 
 admin.site.register(Dentista, DentistaAdmin)

@@ -10,11 +10,10 @@ function carregarDentistas() {
                     const li = document.createElement('li');
                     li.classList.add('list-group-item');
                     li.textContent = dentista.nome;
-                    li.setAttribute('data-id', dentista.id); // Armazena o ID do dentista
+                    li.setAttribute('data-id', dentista.id);
                     dentistasList.appendChild(li);
                 });
 
-                // Seleciona o primeiro dentista da lista
                 selecionarDentista(dentistas[0].id);
             } else {
                 const li = document.createElement('li');
