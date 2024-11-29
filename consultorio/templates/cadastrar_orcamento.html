@@ -72,79 +72,175 @@
         transform: translate(-50%, -50%) rotate(30deg);
         transform-origin: center center;
     }
+
+    .hidden {
+        display: none;
+    }
+
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        font-size: 1.5rem;
+        color: #333;
+    }
 </style>
 
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
+    function corrigirJson(valor) {
+        if (valor) {
+            valor = valor.replace(/'/g, '"');
+            try {
+                return JSON.parse(valor);
+            } catch (e) {
+                console.error('Erro ao fazer o parse do JSON corrigido:', e);
+                return [];
+            }
+        }
+        return [];
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('.dente').forEach(dente => {
-            dente.addEventListener('click', () => {
-                console.log("Dente clicado:", dente);
+        const alternarEstado = (dente, id) => {
+            const circulo = dente.querySelector('.circulo');
+            const risco = dente.querySelector('.risco');
+            let dentesComCirculo = corrigirJson(document.getElementById('dentes_com_circulo').value) || [];
+            let dentesComRisco = corrigirJson(document.getElementById('dentes_com_risco').value) || [];
 
-                const circulo = dente.querySelector('.circulo');
-                const risco = dente.querySelector('.risco');
+            // Alternar entre estado de visibilidade de círculo e risco
+            if (circulo.style.visibility === 'hidden' && risco.style.visibility === 'hidden') {
+                circulo.style.visibility = 'visible';
+                risco.style.visibility = 'hidden';
+            } else if (circulo.style.visibility === 'visible') {
+                circulo.style.visibility = 'hidden';
+                risco.style.visibility = 'visible';
+            } else {
+                risco.style.visibility = 'hidden';
+            }
 
-                if (!circulo || !risco) {
-                    console.error("Elementos não encontrados no dente:", dente);
-                    return;
+            // Atualizar as listas de dentes com círculo e risco
+            if (circulo.style.visibility === 'visible') {
+                if (!dentesComCirculo.includes(id)) {
+                    dentesComCirculo.push(id);
                 }
-
-                if (circulo.style.visibility === 'hidden' && risco.style.visibility === 'hidden') {
-                    circulo.style.visibility = 'visible';
-                } else if (circulo.style.visibility === 'visible') {
-                    circulo.style.visibility = 'hidden';
-                    risco.style.visibility = 'visible';
-                } else {
-                    risco.style.visibility = 'hidden';
+                const riscoIndex = dentesComRisco.indexOf(id);
+                if (riscoIndex !== -1) dentesComRisco.splice(riscoIndex, 1);
+            } else if (risco.style.visibility === 'visible') {
+                if (!dentesComRisco.includes(id)) {
+                    dentesComRisco.push(id);
                 }
-            });
-        });
-    });
-    document.addEventListener('DOMContentLoaded', () => {
-        const dentesComCirculo = [];
-        const dentesComRisco = [];
+                const circuloIndex = dentesComCirculo.indexOf(id);
+                if (circuloIndex !== -1) dentesComCirculo.splice(circuloIndex, 1);
+            } else {
+                const riscoIndex = dentesComRisco.indexOf(id);
+                if (riscoIndex !== -1) dentesComRisco.splice(riscoIndex, 1);
+            }
 
-        document.querySelectorAll('.dente').forEach((dente) => {
-            dente.addEventListener('click', () => {
+            document.getElementById('dentes_com_circulo').value = JSON.stringify(dentesComCirculo);
+            document.getElementById('dentes_com_risco').value = JSON.stringify(dentesComRisco);
+        };
+
+        const inicializarEstados = () => {
+            let dentesComCirculo = corrigirJson(document.getElementById('dentes_com_circulo').value);
+            let dentesComRisco = corrigirJson(document.getElementById('dentes_com_risco').value);
+
+            document.querySelectorAll('.dente').forEach(dente => {
                 const id = dente.id.split('-')[1];
                 const circulo = dente.querySelector('.circulo');
                 const risco = dente.querySelector('.risco');
 
-                if (circulo.style.visibility === 'hidden' && risco.style.visibility === 'hidden') {
+                if (dentesComCirculo.includes(id)) {
                     circulo.style.visibility = 'visible';
-                    dentesComCirculo.push(id);
-                    dentesComRisco.splice(dentesComRisco.indexOf(id), 1);
-                } else if (circulo.style.visibility === 'visible') {
-                    circulo.style.visibility = 'hidden';
-                    risco.style.visibility = 'visible';
-                    dentesComRisco.push(id);
-                    dentesComCirculo.splice(dentesComCirculo.indexOf(id), 1);
                 } else {
-                    risco.style.visibility = 'hidden';
-                    dentesComRisco.splice(dentesComRisco.indexOf(id), 1);
+                    circulo.style.visibility = 'hidden';
                 }
 
+                if (dentesComRisco.includes(id)) {
+                    risco.style.visibility = 'visible';
+                } else {
+                    risco.style.visibility = 'hidden';
+                }
                 document.getElementById('dentes_com_circulo').value = JSON.stringify(dentesComCirculo);
                 document.getElementById('dentes_com_risco').value = JSON.stringify(dentesComRisco);
+                dente.addEventListener('click', () => alternarEstado(dente, id));
             });
+        };
+
+        inicializarEstados();
+
+        // Carregamento das imagens
+        const images = document.querySelectorAll('.dente-img');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const containerDentes = document.getElementById('container-dentes');
+
+        let loadedImages = 0;
+        const totalImages = images.length;
+
+        if (totalImages === 0) {
+            loadingOverlay.style.display = 'none';
+            containerDentes.classList.remove('hidden');
+        }
+
+        images.forEach((img) => {
+            if (img.complete) {
+                loadedImages++;
+            } else {
+                img.addEventListener('load', () => {
+                    loadedImages++;
+                    if (loadedImages === totalImages) {
+                        loadingOverlay.style.display = 'none';
+                        containerDentes.classList.remove('hidden');
+                    }
+                });
+
+                img.addEventListener('error', () => {
+                    loadedImages++;
+                    if (loadedImages === totalImages) {
+                        loadingOverlay.style.display = 'none';
+                        containerDentes.classList.remove('hidden');
+                    }
+                });
+            }
         });
+
+        if (loadedImages === totalImages) {
+            loadingOverlay.style.display = 'none';
+            containerDentes.classList.remove('hidden');
+        }
     });
+
 </script>
 {% endblock %}
 
 {% block conteudo %}
 
-<div class="container ">
-    <h1 style="text-align: center;">Odontograma</h1>
-    <div class="container-dentes" >
+<div class="container mt-4">
+    <a href="{% url 'listar_orcamentos' %}" class="btn btn-secondary"
+        style="position: absolute; top: 80px; left: 20px;">
+        ← Voltar
+    </a>
+    <h1 style="text-align: center;">Orçamento</h1>
+
+    <div class="loading-overlay" id="loading-overlay">
+        <p>Carregando...</p>
+    </div>
+
+    <div class="container-dentes hidden" id="container-dentes">
         {% for i in dentes %}
         <div class="dente" id="dente-{{ i }}">
-            <img src="{% static 'images/' %}dente-{{ i }}.png" alt="Dente {{ i }}">
+            <img src="{% static 'images/' %}dente-{{ i }}.png" alt="Dente {{ i }}" class="dente-img">
             <div class="imagem-overlay"></div>
 
-            <!-- Verifica se o dente está marcado (verificar se isso aqui funciona) -->
             <div class="circulo"
                 style="visibility: {% if i|stringformat:'d' in orcamento.dentes_com_circulo %}visible{% else %}hidden{% endif %};">
             </div>
@@ -154,7 +250,8 @@
         </div>
         {% endfor %}
     </div>
-    <form method="post" action="">
+
+    <form method="post" action="" class="mt-2">
         {% csrf_token %}
         <div class="mb-3">
             <label for="titulo" class="form-label">Título</label>
@@ -162,17 +259,19 @@
         </div>
         <div class="mb-3">
             <label for="descricao" class="form-label">Descrição</label>
-            <textarea class="form-control" id="descricao" name="descricao">{{ orcamento.descricao|default:'' }}</textarea>
+            <textarea class="form-control" id="descricao" name="descricao" style="height: 200px;">{{ orcamento.descricao|default:'' }}</textarea>
+
         </div>
         <div class="mb-3">
             <label for="preco" class="form-label">Preço</label>
-            <input type="number" class="form-control" id="preco" name="preco" value="{{ orcamento.preco|default:'' }}">
+            <input type="number" class="form-control" id="preco" name="preco" value="{{ orcamento.preco|default:'' }}" step="any">
+
         </div>
-        <input type="hidden" id="dentes_com_circulo" name="dentes_com_circulo" value="{{ orcamento.dentes_com_circulo|default:'[]' }}">
-        <input type="hidden" id="dentes_com_risco" name="dentes_com_risco" value="{{ orcamento.dentes_com_risco|default:'[]' }}">
-        <button type="submit" class="btn btn-primary">Salvar</button>
+        <input type="hidden" id="dentes_com_circulo" name="dentes_com_circulo"
+            value="{{ orcamento.dentes_com_circulo|default:'[]' }}">
+        <input type="hidden" id="dentes_com_risco" name="dentes_com_risco"
+            value="{{ orcamento.dentes_com_risco|default:'[]' }}">
+        <button type="submit" class="btn btn-primary mb-4">Salvar</button>
     </form>
-    
-    
 </div>
 {% endblock %}

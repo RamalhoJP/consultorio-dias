@@ -20,4 +20,5 @@ urlpatterns = [
     path('cadastrar-orcamento/', views.cadastrar_orcamento, name='cadastrar_orcamento'),
     path('listar-orcamentos/', views.listar_orcamentos, name='listar_orcamentos'),
     path('orcamento/editar/<int:id>/', views.editar_orcamento, name='editar_orcamento'),
+    path('orcamento/excluir/<int:id>/', views.excluir_orcamento, name='excluir_orcamento'),
 ]

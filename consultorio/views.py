@@ -39,11 +39,11 @@ def editar_orcamento(request, id):
         except json.JSONDecodeError:
             novos_dentes_com_risco = []
 
-        orcamento.dentes_com_circulo = list(set(orcamento.dentes_com_circulo + novos_dentes_com_circulo))
-        orcamento.dentes_com_risco = list(set(orcamento.dentes_com_risco + novos_dentes_com_risco))
+        orcamento.dentes_com_circulo = novos_dentes_com_circulo
+        orcamento.dentes_com_risco = novos_dentes_com_risco
 
         orcamento.save()
-        return redirect('listar_orcamentos')  # Redirecionar após salvar
+        return redirect('listar_orcamentos')
 
     return render(request, 'cadastrar_orcamento.html', {'orcamento': orcamento, 'dentes': range(1, 65)})
 
@@ -66,6 +66,13 @@ def cadastrar_orcamento(request):
         return redirect('listar_orcamentos')
 
     return render(request, 'cadastrar_orcamento.html', {'dentes': range(1, 65)})
+
+@login_required(login_url="/auth/login")
+def excluir_orcamento(request, id):
+    orcamento = get_object_or_404(Orcamento, id=id)
+    if request.method == "POST":
+        orcamento.delete()
+        return redirect('listar_orcamentos')
 
 @login_required(login_url="/auth/login")
 def agenda(request):
