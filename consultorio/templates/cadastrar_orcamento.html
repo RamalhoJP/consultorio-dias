@@ -13,11 +13,13 @@
         width: 1640px;
         justify-content: space-around;
         transform: scale(0.3);
-        margin-left: -80px;
-        margin-top: -100px;
+        margin-top: -200px;
+        margin-bottom: -250px;
         background-color: white;
         border: 10px solid black;
         border-radius: 20px;
+        transform-origin: left;
+        margin-left: 30%;
     }
 
     .dente img {
@@ -27,6 +29,7 @@
         filter: opacity(70%);
 
     }
+
     .dente {
         position: relative;
         cursor: pointer;
@@ -48,25 +51,25 @@
 
     .circulo {
         position: absolute;
-        top: 60%;
+        top: 65%;
         left: 50%;
         width: 30px;
         height: 30px;
         border-radius: 50%;
-        background-color: rgba(255, 0, 0, 1);
+        background-color: rgb(0, 0, 0);
         visibility: hidden;
         transform: translate(-50%, -50%);
     }
 
     .risco {
         position: absolute;
-        top: 60%;
+        top: 50%;
         left: 50%;
         width: 10px;
-        height: 50%;
-        background-color: red;
+        height: 80%;
+        background-color: rgb(0, 0, 0);
         visibility: hidden;
-        transform: translate(-50%, -50%) rotate(45deg);
+        transform: translate(-50%, -50%) rotate(30deg);
         transform-origin: center center;
     }
 </style>
@@ -123,7 +126,6 @@
                     dentesComRisco.splice(dentesComRisco.indexOf(id), 1);
                 }
 
-                // Atualiza os campos ocultos com os vetores atualizados
                 document.getElementById('dentes_com_circulo').value = JSON.stringify(dentesComCirculo);
                 document.getElementById('dentes_com_risco').value = JSON.stringify(dentesComRisco);
             });
@@ -134,46 +136,43 @@
 
 {% block conteudo %}
 
-<h1 style="text-align: center;">Odontograma</h1>
-<div class="container-dentes">
-    {% for i in dentes %}
-    <div class="dente" id="dente-{{ i }}">
-        <img src="{% static 'images/' %}dente-{{ i }}.png" alt="Dente {{ i }}">
-        <div class="imagem-overlay"></div>
-
-        <!-- Verifica se o dente está marcado (verificar se isso aqui funciona) -->
-        <div class="circulo"
-            style="visibility: {% if i|stringformat:'d' in dados.dentes_com_circulo %}visible{% else %}hidden{% endif %};">
-        </div>
-        <div class="risco"
-            style="{% if i|stringformat:'d' in dados.dentes_com_risco %}visibility: visible;{% else %}visibility: hidden;{% endif %}">
-        </div>
-    </div>
-    {% endfor %}
-</div>
-
 <div class="container ">
-    <!-- url faltando -->
+    <h1 style="text-align: center;">Odontograma</h1>
+    <div class="container-dentes" >
+        {% for i in dentes %}
+        <div class="dente" id="dente-{{ i }}">
+            <img src="{% static 'images/' %}dente-{{ i }}.png" alt="Dente {{ i }}">
+            <div class="imagem-overlay"></div>
+
+            <!-- Verifica se o dente está marcado (verificar se isso aqui funciona) -->
+            <div class="circulo"
+                style="visibility: {% if i|stringformat:'d' in orcamento.dentes_com_circulo %}visible{% else %}hidden{% endif %};">
+            </div>
+            <div class="risco"
+                style="{% if i|stringformat:'d' in orcamento.dentes_com_risco %}visibility: visible;{% else %}visibility: hidden;{% endif %}">
+            </div>
+        </div>
+        {% endfor %}
+    </div>
     <form method="post" action="">
         {% csrf_token %}
         <div class="mb-3">
-            <label for="titulo" class="form-label">Titulo</label>
-            <input type="text" class="form-control" id="titulo" name="titulo">
+            <label for="titulo" class="form-label">Título</label>
+            <input type="text" class="form-control" id="titulo" name="titulo" value="{{ orcamento.titulo|default:'' }}">
         </div>
         <div class="mb-3">
             <label for="descricao" class="form-label">Descrição</label>
-            <textarea class="form-control" id="descricao" name="descricao"></textarea>
+            <textarea class="form-control" id="descricao" name="descricao">{{ orcamento.descricao|default:'' }}</textarea>
         </div>
         <div class="mb-3">
             <label for="preco" class="form-label">Preço</label>
-            <input type="number" class="form-control" id="preco" name="preco">
+            <input type="number" class="form-control" id="preco" name="preco" value="{{ orcamento.preco|default:'' }}">
         </div>
-
-        <!-- Campos ocultos para enviar os vetores de dentes -->
-        <input type="hidden" id="dentes_com_circulo" name="dentes_com_circulo">
-        <input type="hidden" id="dentes_com_risco" name="dentes_com_risco">
-
-        <button type="submit" class="btn btn-primary">Submit</button>
+        <input type="hidden" id="dentes_com_circulo" name="dentes_com_circulo" value="{{ orcamento.dentes_com_circulo|default:'[]' }}">
+        <input type="hidden" id="dentes_com_risco" name="dentes_com_risco" value="{{ orcamento.dentes_com_risco|default:'[]' }}">
+        <button type="submit" class="btn btn-primary">Salvar</button>
     </form>
+    
+    
 </div>
 {% endblock %}

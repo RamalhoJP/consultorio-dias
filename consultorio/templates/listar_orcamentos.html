@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block titulo %}
+Orçamentos
+{% endblock %}
+
+{% block conteudo %}
+<div class="container">
+    <h1>Lista de Orçamentos</h1>
+
+    <div class="mb-3 text-end">
+        <a href="{% url 'cadastrar_orcamento' %}" class="btn btn-primary">Criar Orçamento</a>
+    </div>
+
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Título</th>
+                <th>Descrição</th>
+                <th>Preço</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for orcamento in orcamentos %}
+            <tr style="cursor: pointer;" onclick="window.location.href='{% url 'editar_orcamento' orcamento.id %}'">
+                <td>{{ forloop.counter }}</td>
+                <td>{{ orcamento.titulo }}</td>
+                <td>{{ orcamento.descricao }}</td>
+                <td>R$ {{ orcamento.preco }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center">Nenhum orçamento cadastrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

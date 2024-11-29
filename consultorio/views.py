@@ -15,10 +15,39 @@ def principal(request):
     template = loader.get_template('principal.html')
     return HttpResponse(template.render())
 
-def orcamentos(request):
-    dentes = range(1, 65)
-    return render(request, 'orcamentos.html', {'dentes': dentes})
+@login_required(login_url="/auth/login")
+def listar_orcamentos(request):
+    orcamentos = Orcamento.objects.all()
+    return render(request, 'listar_orcamentos.html', {'orcamentos': orcamentos})
 
+@login_required(login_url="/auth/login")
+def editar_orcamento(request, id):
+    orcamento = get_object_or_404(Orcamento, id=id)
+
+    if request.method == 'POST':
+        orcamento.titulo = request.POST.get('titulo', orcamento.titulo)
+        orcamento.descricao = request.POST.get('descricao', orcamento.descricao)
+        orcamento.preco = request.POST.get('preco', orcamento.preco)
+
+        try:
+            novos_dentes_com_circulo = json.loads(request.POST.get('dentes_com_circulo', '[]'))
+        except json.JSONDecodeError:
+            novos_dentes_com_circulo = []
+        
+        try:
+            novos_dentes_com_risco = json.loads(request.POST.get('dentes_com_risco', '[]'))
+        except json.JSONDecodeError:
+            novos_dentes_com_risco = []
+
+        orcamento.dentes_com_circulo = list(set(orcamento.dentes_com_circulo + novos_dentes_com_circulo))
+        orcamento.dentes_com_risco = list(set(orcamento.dentes_com_risco + novos_dentes_com_risco))
+
+        orcamento.save()
+        return redirect('listar_orcamentos')  # Redirecionar após salvar
+
+    return render(request, 'cadastrar_orcamento.html', {'orcamento': orcamento, 'dentes': range(1, 65)})
+
+@login_required(login_url="/auth/login")
 def cadastrar_orcamento(request):
     if request.method == 'POST':
         titulo = request.POST.get('titulo')
@@ -27,7 +56,6 @@ def cadastrar_orcamento(request):
         dentes_com_circulo = request.POST.get('dentes_com_circulo', '[]')
         dentes_com_risco = request.POST.get('dentes_com_risco', '[]')
 
-        # Cria o objeto Orcamento e salva no banco
         Orcamento.objects.create(
             titulo=titulo,
             descricao=descricao,
@@ -35,10 +63,9 @@ def cadastrar_orcamento(request):
             dentes_com_circulo=json.loads(dentes_com_circulo),
             dentes_com_risco=json.loads(dentes_com_risco),
         )
-        return redirect('orcamento.html') 
+        return redirect('listar_orcamentos')
 
-    # Caso seja um GET, renderiza a página
-    return render(request, 'orcamento.html', {'dentes': range(1, 65)})
+    return render(request, 'cadastrar_orcamento.html', {'dentes': range(1, 65)})
 
 @login_required(login_url="/auth/login")
 def agenda(request):

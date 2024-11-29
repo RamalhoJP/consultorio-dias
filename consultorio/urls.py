@@ -17,5 +17,7 @@ urlpatterns = [
     path('atualizar_evento/', views.atualizar_evento, name='atualizar_evento'),
     path('deletar_evento/<int:evento_id>/', views.deletar_evento, name='deletar_evento'),
     
-    path('orcamentos', views.orcamentos, name='orcamentos'),
+    path('cadastrar-orcamento/', views.cadastrar_orcamento, name='cadastrar_orcamento'),
+    path('listar-orcamentos/', views.listar_orcamentos, name='listar_orcamentos'),
+    path('orcamento/editar/<int:id>/', views.editar_orcamento, name='editar_orcamento'),
 ]
