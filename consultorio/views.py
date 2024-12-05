@@ -6,10 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 import json
-from .models import Evento
-from .models import Dentista
-from .models import Cliente
-from .models import Orcamento
+from .models import Evento, Dentista, Cliente, Orcamento
 
 def principal(request):
     template = loader.get_template('principal.html')

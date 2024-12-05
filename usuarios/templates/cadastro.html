@@ -1,82 +1,87 @@
 {% extends "base.html" %}
 
 {% block titulo %}
-    Portal Biblioteca - Cadastro de Usuário
+Portal Biblioteca - Cadastro de Usuário
 {% endblock %}
 
 {% block conteudo %}
-    <main class="container mt-5">
-        <center>
-            <h1>Cadastre-se</h1>            
-            <form action="{% url 'cadastro' %}" method="POST" onsubmit="return validaSenha()">
-                {% csrf_token %}
-                <div class="input-group">
-                    <span class="input-group-text">Usuário: </span>
-                    <input type="text" class="form-control" placeholder="Usuário ..." name="usuario" required>
+<main class="container mt-5">
+    <center>
+        <h1>Cadastre-se</h1>
+    </center>
+    <form action="{% url 'cadastro' %}" method="POST" onsubmit="return validaSenha()">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="usuario">Usuario</label>
+            <input type="text" id="usuario" class="form-control" placeholder="Usuário" name="usuario" required>
+        </div>
+        <br>
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" class="form-control" placeholder="E-mail" name="email" required>
+        </div>
+        <br>
+        <div class="form-group">
+            <label>Senha</label>
+            <div class="input-group">
+                <input type="password" class="form-control" placeholder="Senha" id="password" name="senha" required>
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="button"
+                        onclick="alterarVisibilidadeSenha('password')">
+                        <i class="fa fa-eye"></i>
+                    </button>
                 </div>
-                <br>
-                <div class="input-group">
-                    <span class="input-group-text">E-mail: </span>
-                    <input type="email" class="form-control" placeholder="E-mail ..." name="email" required>
-                </div>
-                <br>
-                <div class="input-group">
-                    <span class="input-group-text">Senha: </span>
-                    <input type="password" class="form-control" placeholder="Senha ..." id="password" name="senha" required>
-                    <div class="input-group-append">
-                        <button class="btn btn-outline-secondary" type="button" onclick="alterarVisibilidadeSenha('password')">
-                            <i class="fa fa-eye"></i>
-                        </button>
-                    </div>
-                </div>
-                <br>
-                <div class="input-group">
-                    <span class="input-group-text">Repetir Senha: </span>
-                    <input type="password" class="form-control" placeholder="Repetir Senha ..." id="confirm_password" name="confirma_senha" required>
-                    <div class="input-group-append">
-                        <button class="btn btn-outline-secondary" type="button" onclick="alterarVisibilidadeSenha('confirm_password')">
-                            <i class="fa fa-eye"></i>
-                        </button>
-                    </div>
-                </div>
-                <br>
-                <div id="passwordError" class="alert alert-danger" style="display: none;">
-                    As senhas não coincidem.
-                </div>
-                <br>
-                <button type="submit" class="btn btn-primary">Cadastrar</button>
-            </form>
-            <br>
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %}" role="alert">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        </center>
-    </main>
-    <script>
-        function alterarVisibilidadeSenha(fieldId) {
-            const field = document.getElementById(fieldId);
-            if (field.type === "password") {
-                field.type = "text";
-            } else {
-                field.type = "password";
-            }
+            </div>
+        </div>
+        <br>
+        <div class="form-group">
+            <label>Repetir Senha</label>
+            <div class="input-group">
+                <input type="password" class="form-control" placeholder="Repetir Senha ..." id="confirm_password"
+                    name="confirma_senha" required>
+                <button class="btn btn-outline-secondary" type="button"
+                    onclick="alterarVisibilidadeSenha('confirm_password')">
+                    <i class="fa fa-eye"></i>
+                </button>
+            </div>
+        </div>
+        <br>
+        <div id="passwordError" class="alert alert-danger" style="display: none;">
+            As senhas não coincidem.
+        </div>
+        <br>
+        <button type="submit" class="btn btn-primary">Cadastrar</button>
+    </form>
+    <br>
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %}" role="alert">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+</main>
+<script>
+    function alterarVisibilidadeSenha(fieldId) {
+        const field = document.getElementById(fieldId);
+        if (field.type === "password") {
+            field.type = "text";
+        } else {
+            field.type = "password";
         }
-        function validaSenha() {
-            const password = document.getElementById("password").value;
-            const confirmPassword = document.getElementById("confirm_password").value;
-            const errorDiv = document.getElementById("passwordError");
+    }
+    function validaSenha() {
+        const password = document.getElementById("password").value;
+        const confirmPassword = document.getElementById("confirm_password").value;
+        const errorDiv = document.getElementById("passwordError");
 
-            if (password !== confirmPassword) {
-                errorDiv.style.display = "block";
-                return false; // Impede o envio do formulário
-            } else {
-                errorDiv.style.display = "none";
-                return true; // Permite o envio do formulário
-            }
+        if (password !== confirmPassword) {
+            errorDiv.style.display = "block";
+            return false; // Impede o envio do formulário
+        } else {
+            errorDiv.style.display = "none";
+            return true; // Permite o envio do formulário
         }
-    </script>
+    }
+</script>
 {% endblock %}
