@@ -218,13 +218,135 @@
             loadingOverlay.style.display = 'none';
             containerDentes.classList.remove('hidden');
         }
+
+        const adicionarProcedimentoBtn = document.getElementById('adicionar-procedimento');
+        const procedimentosContainer = document.getElementById('procedimentos-container');
+        let procedimentoCount = 1;
+
+        adicionarProcedimentoBtn.addEventListener('click', () => {
+            procedimentoCount++;
+            const novoProcedimento = document.createElement('div');
+            novoProcedimento.classList.add('procedimento-container');
+            novoProcedimento.id = `procedimento-${procedimentoCount}`;
+
+            novoProcedimento.innerHTML = `
+        </br>
+        <hr>
+        <label for="nome-${procedimentoCount}">Nome</label>
+        <input type="text" class="form-control mb-2" name="nome-${procedimentoCount}" id="nome-${procedimentoCount}">
+        
+        <div class="row">
+            <div class="col-md-4">
+                <label for="preco-${procedimentoCount}">Preço</label>
+                <input type="number" class="form-control mb-2" name="preco-${procedimentoCount}" id="preco-${procedimentoCount}" step="any">
+            </div>
+            <div class="col-md-4">
+                <label for="data-criacao-${procedimentoCount}">Data de Criação</label>
+                <input type="date" class="form-control mb-2" name="data-criacao-${procedimentoCount}" id="data-criacao-${procedimentoCount}">
+            </div>
+            <div class="col-md-4">
+                <label for="data-finalizado-${procedimentoCount}">Data de Finalização</label>
+                <input type="date" class="form-control mb-2" name="data-finalizado-${procedimentoCount}" id="data-finalizado-${procedimentoCount}">
+            </div>
+        </div>
+
+        <label>
+            <input type="checkbox" class="form-check-label" name="finalizado-${procedimentoCount}" id="finalizado-${procedimentoCount}">
+            Finalizado
+        </label>
+        </br>
+        </br>
+    `;
+
+            procedimentosContainer.appendChild(novoProcedimento);
+        });
+
+        const pagoInput = document.getElementById('pago');
+        const datasTabela = document.getElementById('datas-tabela');
+        const datasInput = document.getElementById('datas');
+
+        // Função para formatar a data no formato DD/MM/AAAA HH:MM
+        const formatarData = (data) => {
+            return data.toLocaleDateString('pt-BR') + ' ' + data.toLocaleTimeString('pt-BR', {
+                hour: '2-digit',
+                minute: '2-digit',
+            });
+        };
+
+        // Atualizar tabela e campo oculto ao modificar o campo 'pago'
+        let linhaDataModificacao = null;  // Variável para armazenar a linha de data de modificação
+
+        pagoInput.addEventListener('input', () => {
+            const dataAtual = new Date();
+            const dataFormatada = formatarData(dataAtual);
+
+            // Verifica se o campo pagoInput está vazio ou não
+            if (pagoInput.value.trim() !== "") {
+                // Se a linha de modificação ainda não existir, cria uma nova
+                if (!linhaDataModificacao) {
+                    const novaLinha = document.createElement('tr');
+                    novaLinha.innerHTML = `
+                <td>${datasTabela.children.length + 1}</td>
+                <td>${dataFormatada}</td>
+            `;
+                    datasTabela.appendChild(novaLinha);
+
+                    // Armazenar referência da linha criada
+                    linhaDataModificacao = novaLinha;
+
+                    // Atualiza o campo oculto com a data
+                    const datasJson = JSON.parse(datasInput.value || '[]');
+                    datasJson.push(dataAtual.toISOString()); // Armazena a data de modificação em formato ISO
+                    datasInput.value = JSON.stringify(datasJson);
+                }
+            } else {
+                // Se o campo pagoInput estiver vazio, remove a linha de modificação (se existir)
+                if (linhaDataModificacao) {
+                    linhaDataModificacao.remove();
+                    linhaDataModificacao = null;  // Limpa a referência da linha
+
+                    // Atualiza o campo oculto removendo a última data inserida
+                    const datasJson = JSON.parse(datasInput.value || '[]');
+                    datasJson.pop(); // Remove a última data
+                    datasInput.value = JSON.stringify(datasJson);
+                }
+            }
+        });
+
+        const calcularPrecoTotal = () => {
+            let precoTotal = 0;
+            document.getElementById('preco-total').value = 0;
+            console.log(precoTotal)
+            // Percorrer todos os inputs de preço
+            document.querySelectorAll('input[id^="preco-"]').forEach(input => {
+                const preco = parseFloat(input.value) || 0;
+                precoTotal += preco;
+            });
+
+            // Atualizar o campo de preço total
+            document.querySelectorAll('input[id^="preco-"]').forEach(input => {
+                input.addEventListener('input', calcularPrecoTotal);
+            });
+            document.getElementById('preco-total').value = precoTotal.toFixed(2);
+        };
+
+        // Adicionar um event listener para cada input de preço
+        document.querySelectorAll('input[id^="preco-"]').forEach(input => {
+            input.addEventListener('input', calcularPrecoTotal);
+        });
+
+        adicionarProcedimentoBtn.addEventListener('click', () => {
+            calcularPrecoTotal();
+        });
+
+        // Chamar a função de cálculo ao carregar a página para garantir que o preço total seja calculado inicialmente
+        calcularPrecoTotal();
     });
 
 </script>
 {% endblock %}
 
 {% block conteudo %}
-
 <div class="container mt-4">
     <a href="{% url 'listar_orcamentos' %}" class="btn btn-secondary"
         style="position: absolute; top: 80px; left: 20px;">
@@ -255,24 +377,90 @@
     <form method="post" action="" class="mt-2">
         {% csrf_token %}
         <div class="mb-3">
-            <label for="titulo" class="form-label">Título</label>
-            <input type="text" class="form-control" id="titulo" name="titulo" value="{{ orcamento.titulo|default:'' }}">
+            <label for="cliente" class="form-label">Cliente</label>
+            <select class="form-select" id="cliente" name="cliente">
+                {% for cliente in clientes %}
+                <option value="{{ cliente.id }}">{{ cliente.nome }}</option>
+                {% endfor %}
+            </select>
         </div>
-        <div class="mb-3">
-            <label for="descricao" class="form-label">Descrição</label>
-            <textarea class="form-control" id="descricao" name="descricao" style="height: 200px;">{{ orcamento.descricao|default:'' }}</textarea>
 
+        <div class="form-check mb-3">
+            <input type="checkbox" class="form-check-input" id="anaminesia" name="anaminesia">
+            <label for="anaminesia" class="form-check-label">Anaminesia</label>
         </div>
-        <div class="mb-3">
-            <label for="preco" class="form-label">Preço</label>
-            <input type="number" class="form-control" id="preco" name="preco" value="{{ orcamento.preco|default:'' }}" step="any">
 
+        <div id="procedimentos-container">
+            <h4>Procedimentos</h4>
+            <div class="procedimento-container" id="procedimento-1">
+                <label for="nome-1">Nome</label>
+                <input type="text" class="form-control mb-2" name="nome-1" id="nome-1">
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="preco-1">Preço</label>
+                        <input type="number" class="form-control mb-2" name="preco-1" id="preco-1" step="any">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="data-criacao-1">Data de Criação</label>
+                        <input type="date" class="form-control mb-2" name="data-criacao-1" id="data-criacao-1">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="data-finalizado-1">Data de Finalização</label>
+                        <input type="date" class="form-control mb-2" name="data-finalizado-1" id="data-finalizado-1">
+                    </div>
+                </div>
+
+                <label>
+                    <input type="checkbox" class="form-check-label" name="finalizado-1" id="finalizado-1">
+                    Finalizado
+                </label>
+            </div>
+            </br>
         </div>
-        <input type="hidden" id="dentes_com_circulo" name="dentes_com_circulo"
-            value="{{ orcamento.dentes_com_circulo|default:'[]' }}">
-        <input type="hidden" id="dentes_com_risco" name="dentes_com_risco"
-            value="{{ orcamento.dentes_com_risco|default:'[]' }}">
-        <button type="submit" class="btn btn-primary mb-4">Salvar</button>
+
+        <button type="button" class="btn btn-secondary mb-3" id="adicionar-procedimento">Adicionar Procedimento
+            +</button>
+
+        <div class="row">
+            <div class="col-md-6">
+                <label for="preco-total" class="form-label">Preço Total</label>
+                <input type="number" class="form-control" id="preco-total" name="preco_total" readonly>
+            </div>
+
+            <div class="col-md-6">
+                <label for="pago" class="form-label">Pago</label>
+                <input type="number" class="form-control" id="pago" name="pago" step="any">
+            </div>
+        </div>
+    </form>
+    </br>
+
+    <!-- Tabela para exibir as datas -->
+    <div class="mt-3">
+        <h4>Datas de Modificação</h4>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Data</th>
+                </tr>
+            </thead>
+            <tbody id="datas-tabela">
+                <!-- Linhas serão adicionadas dinamicamente aqui -->
+            </tbody>
+        </table>
+    </div>
+    </br>
+
+    <!-- Campo oculto para enviar as datas ao backend -->
+    <input type="hidden" id="datas" name="datas" value="[]">
+
+    <input type="hidden" id="dentes_com_circulo" name="dentes_com_circulo"
+        value="{{ orcamento.dentes_com_circulo|default:'[]' }}">
+    <input type="hidden" id="dentes_com_risco" name="dentes_com_risco"
+        value="{{ orcamento.dentes_com_risco|default:'[]' }}">
+    <button type="submit" class="btn btn-primary mb-4">Salvar</button>
     </form>
 </div>
 {% endblock %}

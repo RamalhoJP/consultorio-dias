@@ -23,6 +23,7 @@ Clientes
         <thead>
             <tr>
                 <th>Nome</th>
+                <th>CPF</th>
                 <th>Telefone</th>
                 <th class="text-end">Ações</th>
             </tr>
@@ -31,6 +32,7 @@ Clientes
             {% for cliente in clientes %}
             <tr>
                 <td>{{ cliente.nome }}</td>
+                <td>{{ cliente.cpf }}</td>
                 <td>{{ cliente.telefone }}</td>
                 <td class="text-end">
                     <button class="btn btn-warning btn-sm" data-bs-toggle="modal"
@@ -57,6 +59,11 @@ Clientes
                                     <label for="nome{{ cliente.id }}" class="form-label">Nome</label>
                                     <input type="text" class="form-control" id="nome{{ cliente.id }}" name="nome"
                                         value="{{ cliente.nome }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="cpf{{ cliente.id }}" class="form-label">Cpf</label>
+                                    <input type="text" class="form-control cpf" id="cpf{{ cliente.id }}" name="cpf"
+                                        value="{{ cliente.cpf }}" required>
                                 </div>
                                 <div class="mb-3">
                                     <label for="telefone{{ cliente.id }}" class="form-label">Telefone</label>
@@ -120,6 +127,10 @@ Clientes
                         <input type="text" class="form-control" id="nome" name="nome" required>
                     </div>
                     <div class="mb-3">
+                        <label for="cpf" class="form-label">Cpf</label>
+                        <input type="text" class="form-control cpf" id="cpf" name="cpf" required>
+                    </div>
+                    <div class="mb-3">
                         <label for="telefone" class="form-label">Telefone</label>
                         <input type="text" class="form-control telefone" id="telefone" name="telefone" required>
                     </div>
@@ -145,6 +156,13 @@ Clientes
             clearMaskOnLostFocus: true,
             showMaskOnHover: false
         }).mask(document.querySelectorAll('.telefone'));
+
+        Inputmask({
+            mask: "999.999.999-99",
+            placeholder: " ",
+            clearMaskOnLostFocus: true,
+            showMaskOnHover: false
+        }).mask(document.querySelectorAll('.cpf'));
 
         // Filtrar tabela
         const pesquisaInput = document.getElementById('pesquisa');

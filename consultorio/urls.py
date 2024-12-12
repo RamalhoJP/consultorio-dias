@@ -11,6 +11,8 @@ urlpatterns = [
     path('clientes/excluir/<int:cliente_id>/', views.excluir_cliente, name='excluir_cliente'),
 
     path('dentistas/', views.dentistas, name='dentistas'),
+    path('dentistas/cadastrar', views.cadastrar_dentista, name='cadastrar_dentista'),
+
     path('events/', views.eventos, name='events'),
     path('events/<int:dentista_id>/', views.eventos, name='events_by_dentista'),
     path('cadastrar_evento/', views.cadastrar_evento, name='cadastrar_evento'),

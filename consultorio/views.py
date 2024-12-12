@@ -20,6 +20,7 @@ def listar_orcamentos(request):
 @login_required(login_url="/auth/login")
 def editar_orcamento(request, id):
     orcamento = get_object_or_404(Orcamento, id=id)
+    clientes = Cliente.objects.all()
 
     if request.method == 'POST':
         orcamento.titulo = request.POST.get('titulo', orcamento.titulo)
@@ -30,46 +31,76 @@ def editar_orcamento(request, id):
             novos_dentes_com_circulo = json.loads(request.POST.get('dentes_com_circulo', '[]'))
         except json.JSONDecodeError:
             novos_dentes_com_circulo = []
-        
+
         try:
             novos_dentes_com_risco = json.loads(request.POST.get('dentes_com_risco', '[]'))
         except json.JSONDecodeError:
             novos_dentes_com_risco = []
 
+        try:
+            novas_datas = json.loads(request.POST.get('datas', '[]'))
+        except json.JSONDecodeError:
+            novas_datas = []
+
         orcamento.dentes_com_circulo = novos_dentes_com_circulo
         orcamento.dentes_com_risco = novos_dentes_com_risco
+        orcamento.datas = novas_datas  # Atualiza o campo 'datas' com os novos valores
 
         orcamento.save()
         return redirect('listar_orcamentos')
 
-    return render(request, 'cadastrar_orcamento.html', {'orcamento': orcamento, 'dentes': range(1, 65)})
+    return render(request, 'cadastrar_orcamento.html', {
+        'orcamento': orcamento,
+        'clientes': clientes,
+        'dentes': range(1, 65),
+    })
+
 
 @login_required(login_url="/auth/login")
 def cadastrar_orcamento(request):
+    clientes = Cliente.objects.all()
     if request.method == 'POST':
         titulo = request.POST.get('titulo')
         descricao = request.POST.get('descricao')
         preco = request.POST.get('preco')
-        dentes_com_circulo = request.POST.get('dentes_com_circulo', '[]')
-        dentes_com_risco = request.POST.get('dentes_com_risco', '[]')
+
+        try:
+            dentes_com_circulo = json.loads(request.POST.get('dentes_com_circulo', '[]'))
+        except json.JSONDecodeError:
+            dentes_com_circulo = []
+
+        try:
+            dentes_com_risco = json.loads(request.POST.get('dentes_com_risco', '[]'))
+        except json.JSONDecodeError:
+            dentes_com_risco = []
+
+        try:
+            datas = json.loads(request.POST.get('datas', '[]'))
+        except json.JSONDecodeError:
+            datas = []
 
         Orcamento.objects.create(
             titulo=titulo,
             descricao=descricao,
             preco=preco,
-            dentes_com_circulo=json.loads(dentes_com_circulo),
-            dentes_com_risco=json.loads(dentes_com_risco),
+            dentes_com_circulo=dentes_com_circulo,
+            dentes_com_risco=dentes_com_risco,
+            datas=datas,  # Salva o campo 'datas' no banco de dados
         )
+        
         return redirect('listar_orcamentos')
 
-    return render(request, 'cadastrar_orcamento.html', {'dentes': range(1, 65)})
+    return render(request, 'cadastrar_orcamento.html', {
+        'clientes': clientes,
+        'dentes': range(1, 65),
+    })
 
 @login_required(login_url="/auth/login")
 def excluir_orcamento(request, id):
     orcamento = get_object_or_404(Orcamento, id=id)
     if request.method == "POST":
         orcamento.delete()
-        return redirect('listar_orcamentos')
+        return redirect('listar_orcamentos')    
 
 @login_required(login_url="/auth/login")
 def agenda(request):
@@ -85,8 +116,9 @@ def clientes(request):
 def cadastrar_cliente(request):
     if request.method == 'POST':
         nome = request.POST.get('nome')
+        cpf = request.POST.get('cpf')
         telefone = request.POST.get('telefone')
-        Cliente.objects.create(nome=nome, telefone=telefone)
+        Cliente.objects.create(nome=nome, telefone=telefone, cpf=cpf)
         return redirect('listar_clientes')
 
 @login_required(login_url="/auth/login")
@@ -95,6 +127,7 @@ def editar_cliente(request, cliente_id):
     if request.method == 'POST':
         cliente.nome = request.POST.get('nome')
         cliente.telefone = request.POST.get('telefone')
+        cliente.cpf = request.POST.get('cpf')
         cliente.save()
         return redirect('listar_clientes')
 
@@ -129,6 +162,14 @@ def dentistas(request):
         })
  
     return JsonResponse(dentistas_json, safe=False)
+
+@csrf_exempt
+@login_required(login_url="/auth/login")
+def cadastrar_dentista(request):
+    if request.method == 'POST':
+        nome = request.POST.get('nome')
+        Dentista.objects.create(nome=nome)
+        return redirect('agenda')
 
 @login_required(login_url="/auth/login")
 def eventos(request, dentista_id=None):

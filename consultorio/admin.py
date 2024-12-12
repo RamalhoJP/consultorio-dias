@@ -5,7 +5,7 @@ from .models import Evento
 from .models import Dentista
 
 class ClienteAdmin(admin.ModelAdmin):
-    list_display = ("nome", "telefone")
+    list_display = ("nome", "telefone", "cpf")
 
 admin.site.register(Cliente, ClienteAdmin)
 
@@ -15,7 +15,7 @@ class EventoAdmin(admin.ModelAdmin):
 admin.site.register(Evento, EventoAdmin)
 
 class OrcamentoAdmin(admin.ModelAdmin):
-    list_display = ("titulo", "descricao")
+    list_display = ("cliente", "preco", "pago")
 
 admin.site.register(Orcamento, OrcamentoAdmin)
 

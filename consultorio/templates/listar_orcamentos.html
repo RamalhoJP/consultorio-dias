@@ -46,18 +46,20 @@ Orçamentos
     <table class="table table-hover table-striped">
         <thead>
             <tr>
-                <th>Título</th>
-                <th>Descrição</th>
+                <th>Cliente</th>
+                <th>Anaminésia</th>
                 <th>Preço</th>
+                <th>Valor pago</th>
                 <th class="text-end">Ações</th>
             </tr>
         </thead>
         <tbody id="tabela-orcamento">
             {% for orcamento in orcamentos %}
             <tr>
-                <td>{{ orcamento.titulo }}</td>
-                <td>{{ orcamento.descricao }}</td>
+                <td>{{ orcamento.cliente }}</td>
+                <td>{{ orcamento.anaminesia }}</td>
                 <td>R$ {{ orcamento.preco }}</td>
+                <td>R$ {{ orcamento.pago }}</td>
                 <td class="text-end">
                     <a href="{% url 'editar_orcamento' orcamento.id %}" class="btn btn-warning btn-sm">Editar</a>
                     <button class="btn btn-danger btn-sm" data-bs-toggle="modal"
