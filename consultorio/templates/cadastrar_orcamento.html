@@ -4,6 +4,14 @@
 
 {% block extra_styles %}
 <style>
+    .procedimento {
+        background-color: #f0f0f0;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+    }
+
     .container-dentes {
         position: relative;
         display: flex;
@@ -74,6 +82,49 @@
         transform-origin: center center;
     }
 
+        /* Círculo não preenchido */
+    .circulo-nao-preenchido {
+        position: absolute;
+        top: 65%;
+        left: 50%;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: 5px solid black; /* Apenas a borda, sem preenchimento */
+        visibility: hidden;
+        transform: translate(-50%, -50%);
+    }
+
+    /* X (dois riscos em forma de X) */
+    .x {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100%;
+        height: 100%;
+        transform: translate(-50%, -50%) rotate(45deg);
+        visibility: hidden;
+    }
+
+    .x::before, .x::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 10px;
+        height: 50%;
+        background-color: black;
+    }
+    
+
+    .x::before {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    .x::after {
+        transform: translate(-50%, -50%) rotate(-90deg);
+    }
+
     .hidden {
         display: none;
     }
@@ -91,6 +142,42 @@
         z-index: 1000;
         font-size: 1.5rem;
         color: #333;
+    }
+
+    form {
+        margin: auto;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background: #f9f9f9;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 8px;
+        box-sizing: border-box;
+    }
+
+    button {
+        padding: 10px 15px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background-color: #0056b3;
     }
 </style>
 
@@ -110,76 +197,145 @@
         }
         return [];
     }
+    
+    function carregarTabelaDatas() {
+        const datasInput = document.getElementById('datas');
+        const datasTabela = document.getElementById('datas-tabela');
+        let datasArray = {% if orcamento.datas %} "{{ orcamento.datas|safe|escapejs }}"{% else %} '[]'{% endif %};
+        datasArray = datasArray.replace(/\u0027/g, '"');
+        datasArray = JSON.parse(datasArray);
+        let datasJson = JSON.parse(datasInput.value || '[]');
+        console.log(datasJson)
+        datasArray.forEach(e => {
+            datasJson.push(e)
+        });
+        console.log(datasJson)
+        // Armazena a data de modificação em formato ISO
+        datasInput.value = JSON.stringify(datasJson);
+        datasTabela.innerHTML = '';
+        console.log(datasArray)
+        datasArray.forEach((data, index) => {
+            const dataFormatada = new Date(data).toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+            }) + ' ' + new Date(data).toLocaleTimeString('pt-BR', {
+                hour: '2-digit',
+                minute: '2-digit',
+            });
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const alternarEstado = (dente, id) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${dataFormatada}</td>
+                `;
+            datasTabela.appendChild(row);
+        });
+    }
+
+    function alternarEstado(dente, id) {
+        const circulo = dente.querySelector('.circulo');
+        const risco = dente.querySelector('.risco');
+        const circuloVazio = dente.querySelector('.circulo-nao-preenchido');
+        const x = dente.querySelector('.x');
+        
+        let dentesComCirculo = corrigirJson(document.getElementById('dentes_com_circulo').value) || [];
+        let dentesComRisco = corrigirJson(document.getElementById('dentes_com_risco').value) || [];
+        let dentesComCirculoVazio = corrigirJson(document.getElementById('dentes_com_circulo_nao_preenchido').value) || [];
+        let dentesComX = corrigirJson(document.getElementById('dentes_com_x').value) || [];
+
+        // Lógica para alternar os estados entre visibilidade
+        if (circulo.style.visibility === 'hidden' && risco.style.visibility === 'hidden' && circuloVazio.style.visibility === 'hidden' && x.style.visibility === 'hidden') {
+            circuloVazio.style.visibility = 'visible';
+        } else if (circuloVazio.style.visibility === 'visible') {
+            circuloVazio.style.visibility = 'hidden';
+            circulo.style.visibility = 'visible';
+        } else if (circulo.style.visibility === 'visible') {
+            circulo.style.visibility = 'hidden';
+            risco.style.visibility = 'visible';
+        } else if (risco.style.visibility === 'visible') {
+            risco.style.visibility = 'hidden';
+            x.style.visibility = 'visible';
+        } else {
+            x.style.visibility = 'hidden';
+        }
+
+        if (circulo.style.visibility === 'hidden' && risco.style.visibility === 'hidden' && circuloVazio.style.visibility === 'hidden' && x.style.visibility === 'hidden') {
+            // Quando todos os elementos estão invisíveis, marca como "vazio"
+            // Limpar todos os vetores se o estado for vazio
+            dentesComCirculo = dentesComCirculo.filter(dente => dente !== id);
+            dentesComRisco = dentesComRisco.filter(dente => dente !== id);
+            dentesComCirculoVazio = dentesComCirculoVazio.filter(dente => dente !== id);
+            dentesComX = dentesComX.filter(dente => dente !== id);
+        }   
+        else if (circulo.style.visibility === 'visible') {
+            if (!dentesComCirculo.includes(id)) dentesComCirculo.push(id);
+            dentesComRisco = dentesComRisco.filter(dente => dente !== id);
+            dentesComCirculoVazio = dentesComCirculoVazio.filter(dente => dente !== id);
+            dentesComX = dentesComX.filter(dente => dente !== id);
+        } else if (circuloVazio.style.visibility === 'visible') {
+            // Se o estado é "vazio", limpe o vetor correspondente
+            dentesComCirculo = dentesComCirculo.filter(dente => dente !== id);
+            dentesComRisco = dentesComRisco.filter(dente => dente !== id);
+            dentesComX = dentesComX.filter(dente => dente !== id);
+            if (!dentesComCirculoVazio.includes(id)) dentesComCirculoVazio.push(id);
+        } else if (risco.style.visibility === 'visible') {
+            if (!dentesComRisco.includes(id)) dentesComRisco.push(id);
+            dentesComCirculo = dentesComCirculo.filter(dente => dente !== id);
+            dentesComCirculoVazio = dentesComCirculoVazio.filter(dente => dente !== id);
+            dentesComX = dentesComX.filter(dente => dente !== id);
+        } else if (x.style.visibility === 'visible') {
+            if (!dentesComX.includes(id)) dentesComX.push(id);
+            dentesComCirculo = dentesComCirculo.filter(dente => dente !== id);
+            dentesComCirculoVazio = dentesComCirculoVazio.filter(dente => dente !== id);
+            dentesComRisco = dentesComRisco.filter(dente => dente !== id);
+        }
+
+        // Atualizando os inputs hidden com os novos valores
+        document.getElementById('dentes_com_circulo').value = JSON.stringify(dentesComCirculo);
+        document.getElementById('dentes_com_risco').value = JSON.stringify(dentesComRisco);
+        document.getElementById('dentes_com_circulo_nao_preenchido').value = JSON.stringify(dentesComCirculoVazio);
+        document.getElementById('dentes_com_x').value = JSON.stringify(dentesComX);
+    }
+
+
+    function inicializarEstados() {
+        let dentesComCirculo = corrigirJson(document.getElementById('dentes_com_circulo').value);
+        let dentesComRisco = corrigirJson(document.getElementById('dentes_com_risco').value);
+        let dentesComCirculoVazio = corrigirJson(document.getElementById('dentes_com_circulo_nao_preenchido').value);
+        let dentesComX = corrigirJson(document.getElementById('dentes_com_x').value);
+        
+        document.querySelectorAll('.dente').forEach(dente => {
+            const id = dente.id.split('-')[1];
             const circulo = dente.querySelector('.circulo');
             const risco = dente.querySelector('.risco');
-            let dentesComCirculo = corrigirJson(document.getElementById('dentes_com_circulo').value) || [];
-            let dentesComRisco = corrigirJson(document.getElementById('dentes_com_risco').value) || [];
+            const circuloVazio = dente.querySelector('.circulo-nao-preenchido');
+            const x = dente.querySelector('.x');
 
-            // Alternar entre estado de visibilidade de círculo e risco
-            if (circulo.style.visibility === 'hidden' && risco.style.visibility === 'hidden') {
-                circulo.style.visibility = 'visible';
-                risco.style.visibility = 'hidden';
-            } else if (circulo.style.visibility === 'visible') {
-                circulo.style.visibility = 'hidden';
-                risco.style.visibility = 'visible';
-            } else {
-                risco.style.visibility = 'hidden';
+            // Verificação para evitar erros ao tentar acessar o estilo de elementos nulos
+            if (circulo) {
+                circulo.style.visibility = dentesComCirculo.includes(id) ? 'visible' : 'hidden';
             }
-
-            // Atualizar as listas de dentes com círculo e risco
-            if (circulo.style.visibility === 'visible') {
-                if (!dentesComCirculo.includes(id)) {
-                    dentesComCirculo.push(id);
-                }
-                const riscoIndex = dentesComRisco.indexOf(id);
-                if (riscoIndex !== -1) dentesComRisco.splice(riscoIndex, 1);
-            } else if (risco.style.visibility === 'visible') {
-                if (!dentesComRisco.includes(id)) {
-                    dentesComRisco.push(id);
-                }
-                const circuloIndex = dentesComCirculo.indexOf(id);
-                if (circuloIndex !== -1) dentesComCirculo.splice(circuloIndex, 1);
-            } else {
-                const riscoIndex = dentesComRisco.indexOf(id);
-                if (riscoIndex !== -1) dentesComRisco.splice(riscoIndex, 1);
+            if (risco) {
+                risco.style.visibility = dentesComRisco.includes(id) ? 'visible' : 'hidden';
+            }
+            if (circuloVazio) {
+                circuloVazio.style.visibility = dentesComCirculoVazio.includes(id) ? 'visible' : 'hidden';
+            }
+            if (x) {
+                x.style.visibility = dentesComX.includes(id) ? 'visible' : 'hidden';
             }
 
             document.getElementById('dentes_com_circulo').value = JSON.stringify(dentesComCirculo);
             document.getElementById('dentes_com_risco').value = JSON.stringify(dentesComRisco);
-        };
+            document.getElementById('dentes_com_circulo_nao_preenchido').value = JSON.stringify(dentesComCirculoVazio);
+            document.getElementById('dentes_com_x').value = JSON.stringify(dentesComX);
+            
+            dente.addEventListener('click', () => alternarEstado(dente, id));
+        });
+    }
 
-        const inicializarEstados = () => {
-            let dentesComCirculo = corrigirJson(document.getElementById('dentes_com_circulo').value);
-            let dentesComRisco = corrigirJson(document.getElementById('dentes_com_risco').value);
-
-            document.querySelectorAll('.dente').forEach(dente => {
-                const id = dente.id.split('-')[1];
-                const circulo = dente.querySelector('.circulo');
-                const risco = dente.querySelector('.risco');
-
-                if (dentesComCirculo.includes(id)) {
-                    circulo.style.visibility = 'visible';
-                } else {
-                    circulo.style.visibility = 'hidden';
-                }
-
-                if (dentesComRisco.includes(id)) {
-                    risco.style.visibility = 'visible';
-                } else {
-                    risco.style.visibility = 'hidden';
-                }
-                document.getElementById('dentes_com_circulo').value = JSON.stringify(dentesComCirculo);
-                document.getElementById('dentes_com_risco').value = JSON.stringify(dentesComRisco);
-                dente.addEventListener('click', () => alternarEstado(dente, id));
-            });
-        };
-
-        inicializarEstados();
-
-        // Carregamento das imagens
+    function carregarImagensDentes() {
         const images = document.querySelectorAll('.dente-img');
         const loadingOverlay = document.getElementById('loading-overlay');
         const containerDentes = document.getElementById('container-dentes');
@@ -218,60 +374,65 @@
             loadingOverlay.style.display = 'none';
             containerDentes.classList.remove('hidden');
         }
+    }
 
+    function formatarData(data) {
+        return data.toLocaleDateString('pt-BR') + ' ' + data.toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    }
+
+    function adicionarProcedimento() {
         const adicionarProcedimentoBtn = document.getElementById('adicionar-procedimento');
         const procedimentosContainer = document.getElementById('procedimentos-container');
-        let procedimentoCount = 1;
+        let procedimentoCount = {% if orcamento.procedimentos.count %}{{ orcamento.procedimentos.count }}{% else %}0{% endif %}; // Inicia com o número de procedimentos existentes ou 0
 
         adicionarProcedimentoBtn.addEventListener('click', () => {
             procedimentoCount++;
             const novoProcedimento = document.createElement('div');
             novoProcedimento.classList.add('procedimento-container');
             novoProcedimento.id = `procedimento-${procedimentoCount}`;
-
             novoProcedimento.innerHTML = `
-        </br>
-        <hr>
-        <label for="nome-${procedimentoCount}">Nome</label>
-        <input type="text" class="form-control mb-2" name="nome-${procedimentoCount}" id="nome-${procedimentoCount}">
-        
-        <div class="row">
-            <div class="col-md-4">
-                <label for="preco-${procedimentoCount}">Preço</label>
-                <input type="number" class="form-control mb-2" name="preco-${procedimentoCount}" id="preco-${procedimentoCount}" step="any">
-            </div>
-            <div class="col-md-4">
-                <label for="data-criacao-${procedimentoCount}">Data de Criação</label>
-                <input type="date" class="form-control mb-2" name="data-criacao-${procedimentoCount}" id="data-criacao-${procedimentoCount}">
-            </div>
-            <div class="col-md-4">
-                <label for="data-finalizado-${procedimentoCount}">Data de Finalização</label>
-                <input type="date" class="form-control mb-2" name="data-finalizado-${procedimentoCount}" id="data-finalizado-${procedimentoCount}">
-            </div>
-        </div>
+                <div class="procedimento">
+                    <label for="nome-${procedimentoCount}" >Nome</label>
+                    <input type="text" class="form-control mb-2" name="nome-${procedimentoCount}" id="nome-${procedimentoCount}" required>
 
-        <label>
-            <input type="checkbox" class="form-check-label" name="finalizado-${procedimentoCount}" id="finalizado-${procedimentoCount}">
-            Finalizado
-        </label>
-        </br>
-        </br>
-    `;
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label for="preco-${procedimentoCount}">Preço</label>
+                            <input type="number" class="form-control mb-2" name="preco-${procedimentoCount}" id="preco-${procedimentoCount}" step="any" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="data-criacao-${procedimentoCount}">Data de Criação</label>
+                            <input type="date" class="form-control mb-2" name="data-criacao-${procedimentoCount}" id="data-criacao-${procedimentoCount}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="data-finalizado-${procedimentoCount}">Data de Finalização</label>
+                            <input type="date" class="form-control mb-2" name="data-finalizado-${procedimentoCount}" id="data-finalizado-${procedimentoCount}">
+                        </div>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" name="finalizado-${procedimentoCount}" id="finalizado-${procedimentoCount}">
+                        <label for="finalizado-${procedimentoCount}" class="form-check-label">Finalizado</label>
+                    </div>
+                </<div>
+                `;
 
             procedimentosContainer.appendChild(novoProcedimento);
+            const date = new Date();
+            const offset = date.getTimezoneOffset() * 60000;
+            document.getElementById(`data-criacao-${procedimentoCount}`).value = new Date(date.getTime() - offset).toISOString().slice(0, 10);
         });
+    }
 
+    function adicionarDataModificacaoAoAlterarPago() {
         const pagoInput = document.getElementById('pago');
         const datasTabela = document.getElementById('datas-tabela');
         const datasInput = document.getElementById('datas');
-
+        console.log(datasInput.value)
         // Função para formatar a data no formato DD/MM/AAAA HH:MM
-        const formatarData = (data) => {
-            return data.toLocaleDateString('pt-BR') + ' ' + data.toLocaleTimeString('pt-BR', {
-                hour: '2-digit',
-                minute: '2-digit',
-            });
-        };
 
         // Atualizar tabela e campo oculto ao modificar o campo 'pago'
         let linhaDataModificacao = null;  // Variável para armazenar a linha de data de modificação
@@ -286,22 +447,23 @@
                 if (!linhaDataModificacao) {
                     const novaLinha = document.createElement('tr');
                     novaLinha.innerHTML = `
-                <td>${datasTabela.children.length + 1}</td>
-                <td>${dataFormatada}</td>
-            `;
+                        <td>${datasTabela.children.length + 1}</td>
+                        <td>${dataFormatada}</td> `
+                        ;
                     datasTabela.appendChild(novaLinha);
 
                     // Armazenar referência da linha criada
                     linhaDataModificacao = novaLinha;
-
                     // Atualiza o campo oculto com a data
                     const datasJson = JSON.parse(datasInput.value || '[]');
-                    datasJson.push(dataAtual.toISOString()); // Armazena a data de modificação em formato ISO
+                    datasJson.push(dataAtual.toISOString());
+                    console.log(datasJson)
+                    // Armazena a data de modificação em formato ISO
                     datasInput.value = JSON.stringify(datasJson);
                 }
             } else {
                 // Se o campo pagoInput estiver vazio, remove a linha de modificação (se existir)
-                if (linhaDataModificacao) {
+                if(linhaDataModificacao) {
                     linhaDataModificacao.remove();
                     linhaDataModificacao = null;  // Limpa a referência da linha
 
@@ -312,34 +474,42 @@
                 }
             }
         });
+    }
 
-        const calcularPrecoTotal = () => {
-            let precoTotal = 0;
-            document.getElementById('preco-total').value = 0;
-            console.log(precoTotal)
-            // Percorrer todos os inputs de preço
-            document.querySelectorAll('input[id^="preco-"]').forEach(input => {
-                const preco = parseFloat(input.value) || 0;
-                precoTotal += preco;
-            });
+    function calcularPrecoTotal() {
+        let precoTotal = 0;
+        document.getElementById('preco-total').value = 0;
+        console.log(precoTotal)
+        // Percorrer todos os inputs de preço
+        document.querySelectorAll('input[id^="preco-"]').forEach(input => {
+            const preco = parseFloat(input.value) || 0;
+            precoTotal += preco;
+        });
 
-            // Atualizar o campo de preço total
-            document.querySelectorAll('input[id^="preco-"]').forEach(input => {
-                input.addEventListener('input', calcularPrecoTotal);
-            });
-            document.getElementById('preco-total').value = precoTotal.toFixed(2);
-        };
+        // Atualizar o campo de preço total
+        document.querySelectorAll('input[id^="preco-"]').forEach(input => {
+            input.addEventListener('input', calcularPrecoTotal);
+        });
+        document.getElementById('preco-total').value = precoTotal.toFixed(2);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        inicializarEstados();
+        carregarImagensDentes();
+        adicionarProcedimento();
+        adicionarDataModificacaoAoAlterarPago();
+        carregarTabelaDatas();
+        calcularPrecoTotal();
 
         // Adicionar um event listener para cada input de preço
         document.querySelectorAll('input[id^="preco-"]').forEach(input => {
             input.addEventListener('input', calcularPrecoTotal);
         });
-
+        const adicionarProcedimentoBtn = document.getElementById('adicionar-procedimento');
         adicionarProcedimentoBtn.addEventListener('click', () => {
             calcularPrecoTotal();
         });
 
-        // Chamar a função de cálculo ao carregar a página para garantir que o preço total seja calculado inicialmente
         calcularPrecoTotal();
     });
 
@@ -347,7 +517,7 @@
 {% endblock %}
 
 {% block conteudo %}
-<div class="container mt-4">
+<div class="container mt-4 mb-4">
     <a href="{% url 'listar_orcamentos' %}" class="btn btn-secondary"
         style="position: absolute; top: 80px; left: 20px;">
         ← Voltar
@@ -358,65 +528,94 @@
         <p>Carregando...</p>
     </div>
 
-    <div class="container-dentes hidden" id="container-dentes">
-        {% for i in dentes %}
-        <div class="dente" id="dente-{{ i }}">
-            <img src="{% static 'images/' %}dente-{{ i }}.png" alt="Dente {{ i }}" class="dente-img">
-            <div class="imagem-overlay"></div>
+    <form method="post"
+        action="{% if orcamento %}{% url 'editar_orcamento' orcamento.id %}{% else %}{% url 'cadastrar_orcamento' %}{% endif %}"
+        class="mt-2">
+        <div class="container-dentes hidden" id="container-dentes">
+            {% for i in dentes %}
+            <div class="dente" id="dente-{{ i }}">
+                <img src="{% static 'images/' %}dente-{{ i }}.png" alt="Dente {{ i }}" class="dente-img">
+                <div class="imagem-overlay"></div>
 
-            <div class="circulo"
-                style="visibility: {% if i|stringformat:'d' in orcamento.dentes_com_circulo %}visible{% else %}hidden{% endif %};">
+                <div class="circulo"
+                    style="visibility: {% if i|stringformat:'d' in orcamento.dentes_com_circulo %}visible{% else %}hidden{% endif %};">
+                </div>
+                <div class="circulo-nao-preenchido"
+                    style="visibility: {% if i|stringformat:'d' in orcamento.dentes_com_circulo_vazio %}visible{% else %}hidden{% endif %};">
+                </div>
+                <div class="risco"
+                    style="{% if i|stringformat:'d' in orcamento.dentes_com_risco %}visibility: visible;{% else %}visibility: hidden;{% endif %}">
+                </div>
+                <div class="x"
+                    style="visibility: {% if i|stringformat:'d' in orcamento.dentes_com_x %}visible{% else %}hidden{% endif %};">
+                </div>
             </div>
-            <div class="risco"
-                style="{% if i|stringformat:'d' in orcamento.dentes_com_risco %}visibility: visible;{% else %}visibility: hidden;{% endif %}">
-            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
-    </div>
-
-    <form method="post" action="" class="mt-2">
         {% csrf_token %}
         <div class="mb-3">
             <label for="cliente" class="form-label">Cliente</label>
+            {% if orcamento %}
+            <select class="form-select" id="cliente" name="cliente" {% if orcamento %}disabled{% endif %}>
+                <option value="{{ orcamento.cliente.id }}" >
+                    {{orcamento.cliente.nome }}
+                </option>
+            </select>
+            <input type="hidden" name="cliente" value="{{ orcamento.cliente.id }}">
+            {% else %}
             <select class="form-select" id="cliente" name="cliente">
                 {% for cliente in clientes %}
-                <option value="{{ cliente.id }}">{{ cliente.nome }}</option>
+                <option value="{{ cliente.id }}" >
+                    {{ cliente.nome }}
+                </option>
                 {% endfor %}
             </select>
+            {% endif %}
         </div>
 
         <div class="form-check mb-3">
-            <input type="checkbox" class="form-check-input" id="anaminesia" name="anaminesia">
+            <input type="checkbox" class="form-check-input" id="anaminesia" name="anaminesia" {% if orcamento and orcamento.anaminesia %}checked{% endif %}>
+
             <label for="anaminesia" class="form-check-label">Anaminesia</label>
         </div>
-
         <div id="procedimentos-container">
             <h4>Procedimentos</h4>
-            <div class="procedimento-container" id="procedimento-1">
-                <label for="nome-1">Nome</label>
-                <input type="text" class="form-control mb-2" name="nome-1" id="nome-1">
+            {% for procedimento in orcamento.procedimentos.all %}
+            <div class="procedimento-container" id="procedimento-{{ procedimento.id }}">
+                <div class="procedimento"
+                    style="background-color: #f0f0f0; border-radius: 10px; padding: 15px; margin-bottom: 15px; border: 1px solid #ccc;">
+                    <label for="nome-{{ procedimento.id }}">Nome</label>
+                    <input type="text" class="form-control mb-2" name="nome-{{ procedimento.id }}"
+                        id="nome-{{ procedimento.id }}" value="{{ procedimento.nome }}" required>
 
-                <div class="row">
-                    <div class="col-md-4">
-                        <label for="preco-1">Preço</label>
-                        <input type="number" class="form-control mb-2" name="preco-1" id="preco-1" step="any">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label for="preco-{{ procedimento.id }}">Preço</label>
+                            <input type="number" class="form-control mb-2" name="preco-{{ procedimento.id }}"
+                                id="preco-{{ procedimento.id }}" value="{{ procedimento.preco }}" step="any" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="data-criacao-{{ procedimento.id }}">Data de Criação</label>
+                            <input type="date" class="form-control mb-2" name="data-criacao-{{ procedimento.id }}"
+                                id="data-criacao-{{ procedimento.id }}"
+                                value="{{ procedimento.data_criacao|date:'Y-m-d' }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="data-finalizado-{{ procedimento.id }}">Data de Finalização</label>
+                            <input type="date" class="form-control mb-2" name="data-finalizado-{{ procedimento.id }}"
+                                id="data-finalizado-{{ procedimento.id }}"
+                                value="{{ procedimento.data_finalizado|date:'Y-m-d' }}">
+                        </div>
                     </div>
-                    <div class="col-md-4">
-                        <label for="data-criacao-1">Data de Criação</label>
-                        <input type="date" class="form-control mb-2" name="data-criacao-1" id="data-criacao-1">
-                    </div>
-                    <div class="col-md-4">
-                        <label for="data-finalizado-1">Data de Finalização</label>
-                        <input type="date" class="form-control mb-2" name="data-finalizado-1" id="data-finalizado-1">
+
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" name="finalizado-{{ procedimento.id }}"
+                            id="finalizado-{{ procedimento.id }}" {% if procedimento.finalizado %}checked{% endif %}>
+                        <label for="finalizado-{{ procedimento.id }}" class="form-check-label">Finalizado</label>
                     </div>
                 </div>
-
-                <label>
-                    <input type="checkbox" class="form-check-label" name="finalizado-1" id="finalizado-1">
-                    Finalizado
-                </label>
             </div>
-            </br>
+            {% endfor %}
         </div>
 
         <button type="button" class="btn btn-secondary mb-3" id="adicionar-procedimento">Adicionar Procedimento
@@ -430,37 +629,38 @@
 
             <div class="col-md-6">
                 <label for="pago" class="form-label">Pago</label>
-                <input type="number" class="form-control" id="pago" name="pago" step="any">
+                <input type="number" class="form-control" id="pago" name="pago" step="any"
+                    value="{% if orcamento %}{{ orcamento.pago }}{% endif %}" required>
             </div>
         </div>
-    </form>
-    </br>
 
-    <!-- Tabela para exibir as datas -->
-    <div class="mt-3">
-        <h4>Datas de Modificação</h4>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Data</th>
-                </tr>
-            </thead>
-            <tbody id="datas-tabela">
-                <!-- Linhas serão adicionadas dinamicamente aqui -->
-            </tbody>
-        </table>
-    </div>
-    </br>
+        <div class="mt-3">
+            <h4 class="mb-4">Datas de Modificação</h4>
+            <table class="table table-striped table-bordered">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Data</th>
+                    </tr>
+                </thead>
+                <tbody id="datas-tabela">
+                    <!-- Linhas serão adicionadas dinamicamente aqui -->
+                </tbody>
+            </table>
+        </div>
 
-    <!-- Campo oculto para enviar as datas ao backend -->
-    <input type="hidden" id="datas" name="datas" value="[]">
+        <input type="hidden" id="datas" name="datas" value="[]">
+        <input type="hidden" id="dentes_com_circulo" name="dentes_com_circulo"
+            value="{{ orcamento.dentes_com_circulo|default:'[]' }}">
+        <input type="hidden" id="dentes_com_risco" name="dentes_com_risco"
+            value="{{ orcamento.dentes_com_risco|default:'[]' }}">
+        <input type="hidden" id="dentes_com_circulo_nao_preenchido" name="dentes_com_circulo_nao_preenchido" 
+            value="{{ orcamento.dentes_com_circulo_nao_preenchido|default:'[]' }}">
+        <input type="hidden" id="dentes_com_x" name="dentes_com_x" 
+            value="{{ orcamento.dentes_com_x|default:'[]' }}">
 
-    <input type="hidden" id="dentes_com_circulo" name="dentes_com_circulo"
-        value="{{ orcamento.dentes_com_circulo|default:'[]' }}">
-    <input type="hidden" id="dentes_com_risco" name="dentes_com_risco"
-        value="{{ orcamento.dentes_com_risco|default:'[]' }}">
-    <button type="submit" class="btn btn-primary mb-4">Salvar</button>
+
+        <button type="submit" class="btn btn-primary mb-4">Salvar</button>
     </form>
 </div>
 {% endblock %}

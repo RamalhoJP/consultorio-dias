@@ -4,6 +4,9 @@ from . import views
 urlpatterns = [
     path('', views.principal, name='principal'),
     path('agenda/', views.agenda, name='agenda'),
+    path('agenda/eventos/cadastrar/', views.cadastrar_evento, name='cadastrar_evento'),
+    path('agenda/eventos/atualizar/', views.atualizar_evento, name='atualizar_evento'),
+    path('agenda/eventos/excluir/<int:evento_id>/', views.deletar_evento, name='deletar_evento'),
 
     path('clientes/', views.clientes, name='listar_clientes'),
     path('clientes/cadastrar/', views.cadastrar_cliente, name='cadastrar_cliente'),
@@ -13,14 +16,11 @@ urlpatterns = [
     path('dentistas/', views.dentistas, name='dentistas'),
     path('dentistas/cadastrar', views.cadastrar_dentista, name='cadastrar_dentista'),
 
-    path('events/', views.eventos, name='events'),
-    path('events/<int:dentista_id>/', views.eventos, name='events_by_dentista'),
-    path('cadastrar_evento/', views.cadastrar_evento, name='cadastrar_evento'),
-    path('atualizar_evento/', views.atualizar_evento, name='atualizar_evento'),
-    path('deletar_evento/<int:evento_id>/', views.deletar_evento, name='deletar_evento'),
+    path('eventos/', views.eventos, name='eventos'),
+    path('eventos/<int:dentista_id>/', views.eventos, name='eventos_por_dentista'),
     
-    path('cadastrar-orcamento/', views.cadastrar_orcamento, name='cadastrar_orcamento'),
-    path('listar-orcamentos/', views.listar_orcamentos, name='listar_orcamentos'),
+    path('orcamentos/', views.listar_orcamentos, name='listar_orcamentos'),
+    path('orcamento/cadastrar/', views.cadastrar_orcamento, name='cadastrar_orcamento'),
     path('orcamento/editar/<int:id>/', views.editar_orcamento, name='editar_orcamento'),
     path('orcamento/excluir/<int:id>/', views.excluir_orcamento, name='excluir_orcamento'),
 ]

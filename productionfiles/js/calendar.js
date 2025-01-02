@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         events: function (info, successCallback, failureCallback) {
             const dentistaId = new URLSearchParams(window.location.search).get('dentista_id');
-            const url = dentistaId ? `/events/${dentistaId}/` : '/events/';
+            const url = dentistaId ? `/eventos/${dentistaId}/` : '/eventos/';
 
             fetch(url)
                 .then(response => response.json())
@@ -61,8 +61,11 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById("eventStart").value = startDateTime;
             document.getElementById("eventEnd").value = endDateTime;
             document.getElementById("eventTitle").value = '';
-            document.getElementById("eventDescription").value = '';
+            // document.getElementById("eventDescription").value = '';
             document.getElementById("eventId").value = '';
+            document.getElementById("eventProtetico").value = false;
+            document.getElementById("eventClient").value = '';
+
 
             // Altera o título e exibe apenas o botão Salvar
             document.getElementById("eventModalLabel").textContent = 'Cadastrar Evento';
@@ -75,14 +78,14 @@ document.addEventListener('DOMContentLoaded', function () {
         // Ativado ao clicar em um evento
         eventClick: function (info) {
             const evento = info.event;
-
             // Preencher os campos do modal com os dados do evento, ajustando os horários
             document.getElementById("eventTitle").value = evento.title;
-            document.getElementById("eventDescription").value = evento.extendedProps.description || '';
+            // document.getElementById("eventDescription").value = evento.extendedProps.description || '';
             document.getElementById("eventStart").value = ajustarFusoHorario(evento.start);
             document.getElementById("eventEnd").value = evento.end ? ajustarFusoHorario(evento.end) : '';
             document.getElementById("eventId").value = evento.id;
-
+            document.getElementById("eventProtetico").checked = evento.extendedProps.protetico;
+            document.getElementById("eventClient").value = evento.extendedProps.cliente;
             // Altera o título para Evento e exibe o botão Excluir
             document.getElementById("eventModalLabel").textContent = 'Evento';
             document.getElementById("deleteEvent").style.display = 'inline-block';
@@ -97,7 +100,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const novaDataInicio = evento.start.toISOString();
             const novaDataFim = new Date(evento.start.getTime() + duracao).toISOString();
 
-            fetch('/atualizar_evento/', {
+            fetch('eventos/atualizar/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -129,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const novaDataInicio = evento.start.toISOString();
             const novaDataFim = evento.end.toISOString();
 
-            fetch('/atualizar_evento/', {
+            fetch('eventos/atualizar/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -160,9 +163,11 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("saveEvent").addEventListener("click", function () {
         const id = document.getElementById("eventId").value;
         const titulo = document.getElementById("eventTitle").value;
-        const descricao = document.getElementById("eventDescription").value;
+        // const descricao = document.getElementById("eventDescription").value;
         const inicio = document.getElementById("eventStart").value;  // Pegue a data selecionada no modal
         const fim = document.getElementById("eventEnd").value;
+        const protetico = document.getElementById("eventProtetico").checked;
+        const clienteId = document.getElementById("eventClient").value;
         const dentistaId = new URLSearchParams(window.location.search).get('dentista_id');
 
         // Passar essas verificações para o modal
@@ -178,10 +183,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const eventoData = {
             titulo: titulo,
-            descricao: descricao,
+            // descricao: descricao,
             data_inicio: new Date(inicio).toISOString(),
             data_fim: fim ? new Date(fim).toISOString() : null,
-            dentista: dentistaId
+            dentista: dentistaId,
+            cliente: clienteId,
+            protetico: protetico
         };
 
         if (id) {
@@ -189,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function () {
             eventoData.id = id;
         }
 
-        fetch('/cadastrar_evento/', {
+        fetch('eventos/cadastrar/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -215,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("deleteEvent").addEventListener("click", function () {
         const id = document.getElementById("eventId").value;
 
-        fetch(`/deletar_evento/${id}/`, {
+        fetch(`eventos/excluir/${id}/`, {
             method: 'DELETE',
             headers: {
                 'X-CSRFToken': '{{ csrf_token }}'

@@ -10,7 +10,7 @@ class ClienteAdmin(admin.ModelAdmin):
 admin.site.register(Cliente, ClienteAdmin)
 
 class EventoAdmin(admin.ModelAdmin):
-    list_display = ("id", "titulo", "descricao")
+    list_display = ("id", "titulo")
 
 admin.site.register(Evento, EventoAdmin)
 

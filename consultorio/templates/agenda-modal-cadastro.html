@@ -8,13 +8,18 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="mb-3">
-                    <label for="eventTitle" class="form-label">Título</label>
-                    <input type="text" class="form-control" id="eventTitle">
+                <input type="text" class="form-control" hidden id="eventTitle">
+                <div class="form-group">
+                    <label for="eventClient">Selecione o Cliente:</label>
+                    <select class="form-select" id="eventClient" name="cliente" data-orcamentos="{{ orcamentos|safe }}" required>
+                        {% for cliente in clientes %}
+                            <option value="{{ cliente.id }}" data-id="{{ cliente.id }}" data-nome="{{ cliente.nome }}">{{ cliente.nome }}</option> 
+                        {% endfor %}
+                    </select>
                 </div>
-                <div class="mb-3">
-                    <label for="eventDescription" class="form-label">Descrição</label>
-                    <textarea class="form-control" id="eventDescription"></textarea>
+                <div class="form-check mt-3 mb-3">
+                    <input type="checkbox" class="form-check-input" id="eventProtetico">
+                    <label for="eventProtetico" class="form-check-label">Protético</label>
                 </div>
                 <div class="mb-3">
                     <label for="eventStart" class="form-label">Início</label>
@@ -23,6 +28,9 @@
                 <div class="mb-3">
                     <label for="eventEnd" class="form-label">Fim</label>
                     <input type="datetime-local" class="form-control" id="eventEnd">
+                </div>
+                <div class="text-md-start mt-2 mt-md-0">
+                    <a id="budgetLink" href="#" class="btn btn-primary disabled">Ir para Orçamento →</a>
                 </div>
                 <input type="hidden" id="eventId">
             </div>
@@ -35,3 +43,44 @@
     </div>
 </div>
 
+<script>
+let orcamentosLocal = {% if orcamentos %} "{{ orcamentos|safe|escapejs }}"{% else %} '[]' {% endif %};
+orcamentosLocal = JSON.parse(orcamentosLocal.replace(/None/g, "null").replace(/(\d+):/g, '"$1":'));
+
+function atualizarLink() {
+    const selectClient = document.getElementById('eventClient');
+    const selectedOption = selectClient.options[selectClient.selectedIndex];
+    const clientId = selectedOption.value;
+    const clientName = selectedOption.getAttribute('data-nome');
+
+    // Atualiza o título com o nome do cliente selecionado
+    document.getElementById('eventTitle').value = `${clientName}`;
+
+    // Atualiza o botão "Ir para Orçamento"
+    const budgetLink = document.getElementById('budgetLink');
+    if (orcamentosLocal[clientId] != null) {
+        // Cliente tem orçamento, redireciona para edição
+        budgetLink.href = `/orcamento/editar/${orcamentosLocal[clientId]}/`;
+        budgetLink.classList.remove('disabled');
+        budgetLink.innerText = 'Ir para Orçamento →';
+    } else {
+        // Cliente não tem orçamento, redireciona para criar
+        budgetLink.href = `/orcamento/cadastrar/`;
+        budgetLink.classList.remove('disabled');
+        budgetLink.innerText = 'Criar Orçamento +';
+    }
+}
+
+// Executa a atualização quando o modal é exibido
+document.getElementById('eventModal').addEventListener('show.bs.modal', function () {
+    if(document.getElementById('eventModalLabel').innerText != 'Cadastrar Evento'){
+        atualizarLink();
+    } else {
+        const budgetLink = document.getElementById('budgetLink');
+        budgetLink.classList.add('disabled');
+    }
+});
+
+// Adiciona o listener para mudanças no select do cliente
+document.getElementById('eventClient').addEventListener('change', atualizarLink);
+</script>
