@@ -432,9 +432,6 @@
         const datasTabela = document.getElementById('datas-tabela');
         const datasInput = document.getElementById('datas');
         console.log(datasInput.value)
-        // Função para formatar a data no formato DD/MM/AAAA HH:MM
-
-        // Atualizar tabela e campo oculto ao modificar o campo 'pago'
         let linhaDataModificacao = null;  // Variável para armazenar a linha de data de modificação
 
         pagoInput.addEventListener('input', () => {
@@ -555,22 +552,25 @@
         {% csrf_token %}
         <div class="mb-3">
             <label for="cliente" class="form-label">Cliente</label>
-            {% if orcamento %}
-            <select class="form-select" id="cliente" name="cliente" {% if orcamento %}disabled{% endif %}>
-                <option value="{{ orcamento.cliente.id }}" >
-                    {{orcamento.cliente.nome }}
-                </option>
+            <select class="form-select" id="cliente" name="cliente" 
+                {% if orcamento or not clientes.exists %}disabled{% endif %} required>
+                {% if orcamento %}
+                    <option value="{{ orcamento.cliente.id }}">
+                        {{ orcamento.cliente.nome }}
+                    </option>
+                    <input type="hidden" name="cliente" value="{{ orcamento.cliente.id }}">
+                {% else %}
+                    {% if clientes.exists %}
+                        {% for cliente in clientes %}
+                            <option value="{{ cliente.id }}">
+                                {{ cliente.nome }}
+                            </option>
+                        {% endfor %}
+                    {% else %}
+                        <option>Sem clientes disponíveis</option>
+                    {% endif %}
+                {% endif %}
             </select>
-            <input type="hidden" name="cliente" value="{{ orcamento.cliente.id }}">
-            {% else %}
-            <select class="form-select" id="cliente" name="cliente">
-                {% for cliente in clientes %}
-                <option value="{{ cliente.id }}" >
-                    {{ cliente.nome }}
-                </option>
-                {% endfor %}
-            </select>
-            {% endif %}
         </div>
 
         <div class="form-check mb-3">
@@ -629,8 +629,8 @@
 
             <div class="col-md-6">
                 <label for="pago" class="form-label">Pago</label>
-                <input type="number" class="form-control" id="pago" name="pago" step="any"
-                    value="{% if orcamento %}{{ orcamento.pago }}{% endif %}" required>
+                <input type="number" class="form-control" id="pago" name="pago"
+                    value="{% if orcamento %}{{ orcamento.pago }}{% else %}0.00{% endif %}" required>
             </div>
         </div>
 

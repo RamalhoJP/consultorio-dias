@@ -15,99 +15,92 @@ def principal(request):
 
 @login_required(login_url="/auth/login")
 def listar_orcamentos(request):
-    orcamentos = Orcamento.objects.all()
+    orcamentos = Orcamento.objects.all().order_by('cliente__nome')
     return render(request, 'listar_orcamentos.html', {'orcamentos': orcamentos})
+
+def processar_dentes(request):
+    try:
+        dentes_com_circulo = json.loads(request.POST.get('dentes_com_circulo', '[]'))
+    except json.JSONDecodeError:
+        dentes_com_circulo = []
+
+    try:
+        dentes_com_risco = json.loads(request.POST.get('dentes_com_risco', '[]'))
+    except json.JSONDecodeError:
+        dentes_com_risco = []
+
+    try:
+        dentes_com_circulo_nao_preenchido = json.loads(request.POST.get('dentes_com_circulo_nao_preenchido', '[]'))
+    except json.JSONDecodeError:
+        dentes_com_circulo_nao_preenchido = []
+
+    try:
+        dentes_com_x = json.loads(request.POST.get('dentes_com_x', '[]'))
+    except json.JSONDecodeError:
+        dentes_com_x = []
+
+    return dentes_com_circulo, dentes_com_risco, dentes_com_circulo_nao_preenchido, dentes_com_x
+
+def processar_procedimentos(request):
+    procedimentos = []
+
+    for key in request.POST:
+        if key.startswith('nome-'):
+            procedimento_id = key.split('-')[1]
+
+            try:
+                nome = request.POST.get(f'nome-{procedimento_id}').strip()
+                preco = float(request.POST.get(f'preco-{procedimento_id}', 0) or 0)
+                data_criacao_str = request.POST.get(f'data-criacao-{procedimento_id}')
+                data_finalizado_str = request.POST.get(f'data-finalizado-{procedimento_id}')
+                finalizado = request.POST.get(f'finalizado-{procedimento_id}') == 'on'
+
+                data_criacao = datetime.strptime(data_criacao_str, '%Y-%m-%d').date() if data_criacao_str else datetime.today().date()
+                data_finalizado = datetime.strptime(data_finalizado_str, '%Y-%m-%d').date() if data_finalizado_str else None
+
+                procedimento = Procedimento.objects.create(
+                    nome=nome,
+                    preco=preco,
+                    data_criacao=data_criacao,
+                    data_finalizado=data_finalizado,
+                    finalizado=finalizado
+                )
+                procedimentos.append(procedimento)
+
+            except Exception as e:
+                print(f"Erro ao processar procedimento: {e}")
+
+    return procedimentos
 
 @login_required(login_url="/auth/login")
 def editar_orcamento(request, id):
     orcamento = get_object_or_404(Orcamento, id=id)
-    clientes = Cliente.objects.all()
-    print(orcamento.datas)
+    clientes = Cliente.objects.all().order_by('nome')
 
     if request.method == 'POST':
         try:
-            # Validar cliente
-            print(request.POST)
             cliente_id = request.POST.get('cliente')
-            print(cliente_id)
             cliente = get_object_or_404(Cliente, id=cliente_id)
 
-            # Atualizar campos do orçamento
+            dentes_com_circulo, dentes_com_risco, dentes_com_circulo_nao_preenchido, dentes_com_x = processar_dentes(request)
+            procedimentos = processar_procedimentos(request)
+
             orcamento.cliente = cliente
             orcamento.anaminesia = request.POST.get('anaminesia') == 'on'
-
-            try:
-                orcamento.dentes_com_circulo = json.loads(request.POST.get('dentes_com_circulo', '[]'))
-            except json.JSONDecodeError:
-                orcamento.dentes_com_circulo = []
-
-            try:
-                orcamento.dentes_com_risco = json.loads(request.POST.get('dentes_com_risco', '[]'))
-            except json.JSONDecodeError:
-                orcamento.dentes_com_risco = []
-                
-            try:
-                orcamento.dentes_com_circulo_nao_preenchido = json.loads(request.POST.get('dentes_com_circulo_nao_preenchido', '[]'))
-            except json.JSONDecodeError:
-                orcamento.dentes_com_circulo_nao_preenchido = []
-                
-            try:
-                orcamento.dentes_com_x = json.loads(request.POST.get('dentes_com_x', '[]'))
-            except json.JSONDecodeError:
-                orcamento.dentes_com_x = []
-
-            try:
-                orcamento.datas = json.loads(request.POST.get('datas', '[]'))
-            except json.JSONDecodeError:
-                orcamento.datas = []
-
+            orcamento.dentes_com_circulo = dentes_com_circulo
+            orcamento.dentes_com_risco = dentes_com_risco
+            orcamento.dentes_com_circulo_nao_preenchido = dentes_com_circulo_nao_preenchido
+            orcamento.dentes_com_x = dentes_com_x
             orcamento.preco = float(request.POST.get('preco_total', 0) or 0)
             orcamento.pago = float(request.POST.get('pago', 0) or 0)
+            orcamento.datas = json.loads(request.POST.get('datas', '[]'))
+            orcamento.procedimentos.set(procedimentos)
             orcamento.save()
-
-            # Processar procedimentos existentes ou criar novos
-            procedimentos_atualizados = []
-
-            for key in request.POST:
-                if key.startswith('nome-'):
-                    procedimento_id = key.split('-')[1]
-
-                    # Dados do procedimento
-                    nome = request.POST.get(f'nome-{procedimento_id}', '').strip()
-                    preco = request.POST.get(f'preco-{procedimento_id}', 0)
-                    data_criacao_str = request.POST.get(f'data-criacao-{procedimento_id}')
-                    data_finalizado_str = request.POST.get(f'data-finalizado-{procedimento_id}')
-                    finalizado = request.POST.get(f'finalizado-{procedimento_id}') == 'on'
-
-                    # Verificar se o nome ou preço são válidos
-                    if not nome or not preco:
-                        continue
-
-                    preco = float(preco)
-
-                    # Converter datas com fallback para None
-                    data_criacao = datetime.strptime(data_criacao_str, '%Y-%m-%d').date() if data_criacao_str else datetime.today().date()
-                    data_finalizado = datetime.strptime(data_finalizado_str, '%Y-%m-%d').date() if data_finalizado_str else None
-
-                    # Atualizar ou criar procedimento
-                    procedimento, created = Procedimento.objects.get_or_create(
-                        nome=nome,
-                        preco=preco,
-                        data_criacao=data_criacao,
-                        data_finalizado=data_finalizado,
-                        finalizado=finalizado
-                    )
-
-                    procedimentos_atualizados.append(procedimento)
-
-            # Atualizar os procedimentos do orçamento
-            orcamento.procedimentos.set(procedimentos_atualizados)
 
             return redirect('listar_orcamentos')
 
         except Exception as e:
             print(f"Erro ao editar orçamento: {e}")
-            print('a')
 
     return render(request, 'cadastrar_orcamento.html', {
         'orcamento': orcamento,
@@ -115,170 +108,36 @@ def editar_orcamento(request, id):
         'dentes': range(1, 65),
     })
 
+
 @login_required(login_url="/auth/login")
 def cadastrar_orcamento(request):
-    clientes = Cliente.objects.filter(orcamentos__isnull=True)
+    clientes = Cliente.objects.filter(orcamentos__isnull=True).order_by('nome')
+
     if request.method == 'POST':
-        cliente_id = request.POST.get('cliente')
-        anaminesia = request.POST.get('anaminesia') == 'on'
-        
-        # Tratamento para a obtenção dos dentes e datas
         try:
-            dentes_com_circulo = json.loads(request.POST.get('dentes_com_circulo', '[]'))
-        except json.JSONDecodeError:
-            dentes_com_circulo = []  # Default se houver erro
+            cliente_id = request.POST.get('cliente')
+            cliente = get_object_or_404(Cliente, id=cliente_id)
 
-        try:
-            dentes_com_risco = json.loads(request.POST.get('dentes_com_risco', '[]'))
-        except json.JSONDecodeError:
-            dentes_com_risco = []  # Default se houver erro
-            
-        try:
-            dentes_com_circulo_nao_preenchido = json.loads(request.POST.get('dentes_com_circulo_nao_preenchido', '[]'))
-        except json.JSONDecodeError:
-            dentes_com_circulo_nao_preenchido = []
-            
-        try:
-            dentes_com_x = json.loads(request.POST.get('dentes_com_x', '[]'))
-        except json.JSONDecodeError:
-            dentes_com_x = []
+            dentes_com_circulo, dentes_com_risco, dentes_com_circulo_nao_preenchido, dentes_com_x = processar_dentes(request)
+            procedimentos = processar_procedimentos(request)
 
-        # Tratamento para preço total
-        preco_total = request.POST.get('preco_total')
-        if preco_total:
-            try:
-                preco_total = float(preco_total)
-            except ValueError:
-                preco_total = None  # Definindo como None se houver erro
-
-        # Tratamento para valor pago
-        pago = request.POST.get('pago')
-        if pago:
-            try:
-                pago = float(pago)
-            except ValueError:
-                pago = None  # Definindo como None se houver erro
-
-        # Tratamento para datas
-        try:
-            datas = json.loads(request.POST.get('datas', '[]'))
-        except json.JSONDecodeError:
-            datas = []  # Default se houver erro
-
-        print("request.POST:", request.POST)  # Para depuração
-        print(f"cliente_id: {cliente_id}")
-        print(f"anaminesia: {anaminesia}")
-        print(f"dentes_com_circulo: {dentes_com_circulo}")
-        print(f"dentes_com_risco: {dentes_com_risco}")
-        print(f"preco_total: {preco_total}")
-        print(f"pago: {pago}")
-        print(f"datas: {datas}")
-
-        # Verificação de cliente
-        try:
-            cliente = Cliente.objects.get(id=cliente_id)
-        except Cliente.DoesNotExist:
-            cliente = None
-            print("Erro: Cliente não encontrado")
-            return redirect('listar_orcamentos')  # Redireciona ou mostra um erro
-
-        procedimentos = []
-        
-        # Processando procedimentos
-        for key in request.POST:
-            if key.startswith('nome-'):
-                procedimento_id = key.split('-')[1]
-
-                # Inicializando variáveis com valores padrão
-                nome = preco = data_criacao = data_finalizado = None
-                finalizado = False
-
-                # Obtendo e tratando os valores dos campos dos procedimentos
-                try:
-                    nome = request.POST.get(f'nome-{procedimento_id}')
-                    if not nome:
-                        raise ValueError("Nome não pode ser vazio.")
-                except Exception as e:
-                    print(f"Erro ao obter nome: {e}")
-                    nome = "Desconhecido"  # Valor default em caso de erro
-
-                try:
-                    preco = request.POST.get(f'preco-{procedimento_id}')
-                    if preco:
-                        preco = float(preco)
-                    else:
-                        raise ValueError("Preço não pode ser vazio ou inválido.")
-                except Exception as e:
-                    print(f"Erro ao obter ou converter preco: {e}")
-                    preco = None  # Preço inválido ou não fornecido
-
-                # Tratamento de data
-                try:
-                    data_criacao = request.POST.get(f'data-criacao-{procedimento_id}')
-                    if data_criacao:
-                        data_criacao = datetime.strptime(data_criacao, '%Y-%m-%d').date()
-                    else:
-                        raise ValueError("Data de criação não pode ser vazia.")
-                except (Exception, ValueError) as e:
-                    print(f"Erro ao obter ou converter data_criacao: {e}")
-                    data_criacao = None  # Definido como None se ocorrer erro
-
-                try:
-                    data_finalizado = request.POST.get(f'data-finalizado-{procedimento_id}')
-                    if data_finalizado:
-                        data_finalizado = datetime.strptime(data_finalizado, '%Y-%m-%d').date()
-                    else:
-                        data_finalizado = None
-                except (Exception, ValueError) as e:
-                    print(f"Erro ao obter ou converter data_finalizado: {e}")
-                    data_finalizado = None
-
-                # Verificando se o procedimento foi finalizado
-                try:
-                    finalizado = request.POST.get(f'finalizado-{procedimento_id}') == 'on'
-                except Exception as e:
-                    print(f"Erro ao obter status de 'finalizado': {e}")
-                    finalizado = False  # Default para não finalizado
-
-                # Tentativa de criar o procedimento
-                try:
-                    procedimento = Procedimento.objects.create(
-                        nome=nome,
-                        preco=preco,
-                        data_criacao=data_criacao,
-                        data_finalizado=data_finalizado,
-                        finalizado=finalizado
-                    )
-                    procedimentos.append(procedimento)
-                except Exception as e:
-                    print(f"Erro ao criar procedimento: {e}")
-
-        # Verificação dos dados obrigatórios para o orçamento
-        if not cliente or preco_total is None or preco_total <= 0:
-            print("Erro: Cliente inválido ou preço total inválido")
-            return redirect('listar_orcamentos')  # Redireciona em caso de erro
-
-        # Criando o orçamento
-        try:
             orcamento = Orcamento.objects.create(
                 cliente=cliente,
-                anaminesia=anaminesia,
+                anaminesia=request.POST.get('anaminesia') == 'on',
                 dentes_com_circulo=dentes_com_circulo,
                 dentes_com_risco=dentes_com_risco,
                 dentes_com_circulo_nao_preenchido=dentes_com_circulo_nao_preenchido,
                 dentes_com_x=dentes_com_x,
-                preco=preco_total,
-                pago=pago,
-                datas=datas,
+                preco=float(request.POST.get('preco_total', 0) or 0),
+                pago=float(request.POST.get('pago', 0) or 0),
+                datas=json.loads(request.POST.get('datas', '[]')),
             )
-            print("Orçamento criado com sucesso!")
-        except Exception as e:
-            print(f"Erro ao criar orçamento: {e}")
-            return redirect('listar_orcamentos')  # Redireciona em caso de falha
+            orcamento.procedimentos.set(procedimentos)
 
-        # Associando os procedimentos ao orçamento
-        orcamento.procedimentos.set(procedimentos)
-        return redirect('listar_orcamentos')
+            return redirect('listar_orcamentos')
+
+        except Exception as e:
+            print(f"Erro ao cadastrar orçamento: {e}")
 
     return render(request, 'cadastrar_orcamento.html', {
         'clientes': clientes,
@@ -294,7 +153,7 @@ def excluir_orcamento(request, id):
 
 @login_required(login_url="/auth/login")
 def agenda(request):
-    clientes = Cliente.objects.prefetch_related('orcamentos')
+    clientes = Cliente.objects.prefetch_related('orcamentos').order_by('nome')
 
     # Monta um dicionário: {cliente_id: orcamento_id ou None}
     orcamentos = {
@@ -310,7 +169,7 @@ def agenda(request):
 
 @login_required(login_url="/auth/login")
 def clientes(request):
-    clientes = Cliente.objects.all()
+    clientes = Cliente.objects.all().order_by('nome')
     return render(request, 'clientes.html', {'clientes': clientes})
 
 @login_required(login_url="/auth/login")
